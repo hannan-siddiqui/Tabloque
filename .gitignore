@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Production build
+# (Uncomment dist/ if you do NOT want to track compiled extension builds)
+# dist/
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local

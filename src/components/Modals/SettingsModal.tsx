@@ -577,7 +577,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className="board-header-title truncate"
                         style={{
                           fontFamily: typography.fontFamily === 'mono' ? 'JetBrains Mono' : typography.fontFamily === 'serif' ? 'Cinzel' : typography.fontFamily === 'space' ? 'Space Grotesk' : typography.fontFamily === 'outfit' ? 'Outfit' : typography.fontFamily === 'poppins' ? 'Poppins' : typography.fontFamily === 'jakarta' ? 'Plus Jakarta Sans' : 'Inter',
-                          color: typography.textColor === 'theme' ? undefined : typography.textColor,
+                          color: typography.textColor === 'theme' ? 'var(--theme-accent, #22c55e)' : typography.textColor,
                           fontWeight: typography.fontWeight === 'bold' ? 700 : typography.fontWeight === 'semibold' ? 600 : typography.fontWeight === 'medium' ? 500 : 400,
                           textTransform: typography.textTransform,
                           letterSpacing: typography.letterSpacing === 'tight' ? '-0.02em' : typography.letterSpacing === 'wide' ? '0.05em' : 'normal',
@@ -598,7 +598,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className="bookmark-item-title truncate flex-1"
                         style={{
                           fontFamily: typography.fontFamily === 'mono' ? 'JetBrains Mono' : typography.fontFamily === 'serif' ? 'Cinzel' : typography.fontFamily === 'space' ? 'Space Grotesk' : typography.fontFamily === 'outfit' ? 'Outfit' : typography.fontFamily === 'poppins' ? 'Poppins' : typography.fontFamily === 'jakarta' ? 'Plus Jakarta Sans' : 'Inter',
-                          color: typography.textColor === 'theme' ? undefined : typography.textColor,
+                          color: typography.textColor === 'theme' ? 'var(--theme-accent, #22c55e)' : typography.textColor,
                           fontWeight: typography.fontWeight === 'bold' ? 700 : typography.fontWeight === 'semibold' ? 600 : typography.fontWeight === 'medium' ? 500 : 400,
                           textTransform: typography.textTransform,
                           letterSpacing: typography.letterSpacing === 'tight' ? '-0.02em' : typography.letterSpacing === 'wide' ? '0.05em' : 'normal',

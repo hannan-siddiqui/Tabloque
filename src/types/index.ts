@@ -25,6 +25,7 @@ export interface Page {
   icon?: string;
   boardIds: string[];
   watchIds?: string[];
+  calendarIds?: string[];
   layout?: 'free' | 'grid' | 'kanban';
   createdAt: number;
 }
@@ -77,6 +78,25 @@ export interface WatchWidget {
   is24Hour?: boolean;
   showSeconds?: boolean;
   position?: { x: number; y: number };
+  width?: number;
+  height?: number;
+  createdAt: number;
+}
+
+export type CalendarType =
+  | 'monthly'
+  | 'compact'
+  | 'split'
+  | 'strip';
+
+export interface CalendarWidget {
+  id: string;
+  pageId?: string;
+  type: CalendarType;
+  title?: string;
+  position?: { x: number; y: number };
+  width?: number;
+  height?: number;
   createdAt: number;
 }
 
@@ -169,6 +189,8 @@ export interface TabloqueState {
   borderConfig?: BorderConfig;
   watches?: Record<string, WatchWidget>;
   watchOrder?: string[];
+  calendars?: Record<string, CalendarWidget>;
+  calendarOrder?: string[];
   authBoards?: Record<string, AuthBoard>;
   authItems?: Record<string, AuthItem>;
   authBoardOrder?: string[];

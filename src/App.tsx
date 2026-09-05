@@ -10,7 +10,7 @@ import { ImportModal } from './components/Modals/ImportModal';
 import { SettingsModal } from './components/Modals/SettingsModal';
 import { AddBookmarkModal } from './components/Modals/AddBookmarkModal';
 import { AddBoardModal } from './components/Modals/AddBoardModal';
-import { Bookmark, ThemeId, WatchWidget, AuthItem, NoteItem } from './types';
+import { Bookmark, ThemeId, WatchWidget, CalendarWidget, AuthItem, NoteItem } from './types';
 import { THEMES } from './theme/themes';
 import { INITIAL_STATE } from './storage/initial-data';
 import { AuthCanvas } from './components/Auth/AuthCanvas';
@@ -43,6 +43,9 @@ export const App: React.FC = () => {
     addWatch,
     updateWatch,
     deleteWatch,
+    addCalendar,
+    updateCalendar,
+    deleteCalendar,
     setActiveTab,
     createAuthBoard,
     updateAuthBoard,
@@ -105,18 +108,8 @@ export const App: React.FC = () => {
 
   // Theme accent color resolution for borders and dynamic text
   const themeAccentColor = useMemo(() => {
-    switch (currentThemeId) {
-      case 'crimson': return 'rgba(244, 63, 94, 0.85)';
-      case 'emerald': return 'rgba(34, 197, 94, 0.85)';
-      case 'sunset': case 'solar': return 'rgba(245, 158, 11, 0.85)';
-      case 'oceanic': case 'sapphire': return 'rgba(56, 189, 248, 0.85)';
-      case 'cyberpunk': return 'rgba(236, 72, 153, 0.85)';
-      case 'amethyst': return 'rgba(168, 85, 247, 0.85)';
-      case 'aurora': return 'rgba(20, 184, 166, 0.85)';
-      case 'matcha': return 'rgba(132, 204, 22, 0.85)';
-      default: return 'rgba(34, 197, 94, 0.85)';
-    }
-  }, [currentThemeId]);
+    return currentThemeConfig?.accentColor || 'rgba(34, 197, 94, 0.85)';
+  }, [currentThemeConfig]);
 
   const resolvedTextColor = typography.textColor === 'theme' ? themeAccentColor : typography.textColor;
 
@@ -139,6 +132,26 @@ export const App: React.FC = () => {
       return w && (w.pageId === activePage.id || activePage.watchIds?.includes(wId));
     });
   }, [state.watchOrder, state.watches, activePage]);
+
+  // Calendars scoped strictly to the currently active page
+  const pageCalendars = useMemo(() => {
+    if (!state.calendars || !activePage) return {};
+    const filtered: Record<string, CalendarWidget> = {};
+    Object.entries(state.calendars).forEach(([cId, cal]) => {
+      if (cal.pageId === activePage.id || activePage.calendarIds?.includes(cId)) {
+        filtered[cId] = cal;
+      }
+    });
+    return filtered;
+  }, [state.calendars, activePage]);
+
+  const pageCalendarOrder = useMemo(() => {
+    if (!state.calendarOrder || !activePage) return [];
+    return state.calendarOrder.filter((cId) => {
+      const c = state.calendars?.[cId];
+      return c && (c.pageId === activePage.id || activePage.calendarIds?.includes(cId));
+    });
+  }, [state.calendarOrder, state.calendars, activePage]);
 
   if (!isLoaded || !activePage) {
     return (
@@ -222,8 +235,12 @@ export const App: React.FC = () => {
             isEditMode={isEditMode}
             watches={pageWatches}
             watchOrder={pageWatchOrder}
+            calendars={pageCalendars}
+            calendarOrder={pageCalendarOrder}
             onUpdateWatch={updateWatch}
             onDeleteWatch={deleteWatch}
+            onUpdateCalendar={updateCalendar}
+            onDeleteCalendar={deleteCalendar}
             onReorderBoards={reorderBoards}
             onReorderBookmarks={reorderBookmarksInBoard}
             onMoveBookmark={moveBookmark}
@@ -297,7 +314,18 @@ export const App: React.FC = () => {
         syncStatus={syncStatus}
         activePage={activePage}
         onUpdatePage={updatePage}
-        onAddWatch={addWatch}
+        onAddWatch={(type) => {
+          if (state.activeTab !== 'bookmarks') {
+            setActiveTab('bookmarks');
+          }
+          addWatch(type);
+        }}
+        onAddCalendar={(type) => {
+          if (state.activeTab !== 'bookmarks') {
+            setActiveTab('bookmarks');
+          }
+          addCalendar(type);
+        }}
         onOpenAddBoard={() => {
           if (state.activeTab === 'auth') {
             setIsAddAuthBoardOpen(true);

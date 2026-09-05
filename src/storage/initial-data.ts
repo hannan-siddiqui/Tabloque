@@ -188,6 +188,8 @@ export const INITIAL_STATE: TabloqueState = {
     },
   },
   watchOrder: ['watch-1'],
+  calendars: {},
+  calendarOrder: [],
   activeTab: 'bookmarks',
   authBoards: {
     'auth-board-1': {

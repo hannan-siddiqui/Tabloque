@@ -211,7 +211,7 @@ export const AuthItemRow: React.FC<AuthItemRowProps> = ({
 
         {/* Name - Strictly only the name is shown */}
         <div className="flex-1 min-w-0 pr-1">
-          <h4 className="text-sm font-medium text-slate-100 leading-snug truncate group-hover:text-emerald-300 transition-colors">
+          <h4 className="text-sm font-medium text-slate-100 leading-snug truncate group-hover:text-emerald-300 transition-colors bookmark-item-title">
             {displayName}
           </h4>
         </div>

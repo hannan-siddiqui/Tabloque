@@ -23,7 +23,7 @@ export const WATCH_STYLES: { id: WatchType; label: string; icon: string; desc: s
   { id: 'hud', label: 'Typography HUD', icon: '⏱️', desc: 'Giant slashed techno digits with hours, minutes & seconds' },
 ];
 
-/* 7-Segment SVG Digit with Ghost Inactive Segments */
+/* 7-Segment SVG Digit with Ghost Inactive Segments and Dynamic Scaling */
 const SEGMENTS: Record<string, number[]> = {
   '0': [1, 1, 1, 1, 1, 1, 0],
   '1': [0, 1, 1, 0, 0, 0, 0],
@@ -37,10 +37,12 @@ const SEGMENTS: Record<string, number[]> = {
   '9': [1, 1, 1, 1, 0, 1, 1],
 };
 
-const SvgSevenSegment: React.FC<{ digit: string }> = ({ digit }) => {
+const SvgSevenSegment: React.FC<{ digit: string; scale?: number }> = ({ digit, scale = 1 }) => {
   const active = SEGMENTS[digit] || SEGMENTS['0'];
+  const w = Math.round(38 * scale);
+  const h = Math.round(62 * scale);
   return (
-    <svg viewBox="0 0 32 58" className="w-10 h-16 sm:w-11 sm:h-18 drop-shadow-sm select-none">
+    <svg viewBox="0 0 32 58" style={{ width: `${w}px`, height: `${h}px` }} className="drop-shadow-sm select-none">
       {/* a - top horizontal */}
       <rect x="5" y="2" width="22" height="4.5" rx="2.2" fill={active[0] ? '#ffffff' : 'rgba(255,255,255,0.1)'} opacity={active[0] ? 0.95 : 0.25} />
       {/* b - top right vertical */}
@@ -71,6 +73,16 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
 
+  // Active watch style fallback
+  const validWatchTypes: WatchType[] = ['hybrid', 'stacked', 'roman', 'hud'];
+  const currentWatchType: WatchType = validWatchTypes.includes(watch.type) ? watch.type : 'hybrid';
+  const currentIndex = Math.max(0, WATCH_STYLES.findIndex((s) => s.id === currentWatchType));
+
+  // Dynamic resizing & scale logic
+  const defaultBaseWidth = currentWatchType === 'hud' ? 440 : 260;
+  const [dynamicWidth, setDynamicWidth] = useState<number | null>(null);
+  const [isResizing, setIsResizing] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date());
@@ -81,9 +93,13 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
   const isFreeLayout = layoutMode === 'free';
   const pos = watch.position || defaultPosition;
 
-  // Solid, responsive pointer drag anywhere on card
+  // Compute effective width and proportional scaling factor
+  const effectiveWidth = dynamicWidth ?? watch.width ?? defaultBaseWidth;
+  const scale = Math.max(0.65, Math.min(2.2, effectiveWidth / defaultBaseWidth));
+
+  // Solid, responsive pointer drag anywhere on card (excluding controls)
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (!isFreeLayout) return;
+    if (!isFreeLayout || isResizing) return;
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('input') || target.closest('a') || target.closest('.no-drag')) {
@@ -130,6 +146,51 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
     window.addEventListener('pointerup', onPointerUp);
   };
 
+  // Interactive Bottom-Right Corner Drag-to-Resize
+  const handleResizePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = effectiveWidth;
+    let finalWidth = startWidth;
+
+    const minWidth = currentWatchType === 'hud' ? 280 : 180;
+    const maxWidth = currentWatchType === 'hud' ? 820 : 560;
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const newWidth = Math.max(minWidth, Math.min(maxWidth, Math.round(startWidth + deltaX)));
+      finalWidth = newWidth;
+      setDynamicWidth(newWidth);
+    };
+
+    const onPointerUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      onUpdateWatch(watch.id, { width: finalWidth });
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
+  const handleSetPresetWidth = (size: 'sm' | 'md' | 'lg') => {
+    let targetWidth: number;
+    if (currentWatchType === 'hud') {
+      targetWidth = size === 'sm' ? 340 : size === 'md' ? 440 : 580;
+    } else {
+      targetWidth = size === 'sm' ? 210 : size === 'md' ? 260 : 340;
+    }
+    setDynamicWidth(targetWidth);
+    onUpdateWatch(watch.id, { width: targetWidth });
+  };
+
   const hours24 = time.getHours();
   const is24Hour = watch.is24Hour ?? false;
   const hours = is24Hour ? hours24 : hours24 % 12 || 12;
@@ -144,11 +205,6 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
   const monthStr = time.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
   const fullDateStr = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // Active watch style fallback
-  const validWatchTypes: WatchType[] = ['hybrid', 'stacked', 'roman', 'hud'];
-  const currentWatchType: WatchType = validWatchTypes.includes(watch.type) ? watch.type : 'hybrid';
-  const currentIndex = Math.max(0, WATCH_STYLES.findIndex((s) => s.id === currentWatchType));
-
   const handleNextStyle = () => {
     const nextIdx = (currentIndex + 1) % WATCH_STYLES.length;
     onUpdateWatch(watch.id, { type: WATCH_STYLES[nextIdx].id });
@@ -159,19 +215,23 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
     onUpdateWatch(watch.id, { type: WATCH_STYLES[prevIdx].id });
   };
 
-  const isWide = currentWatchType === 'hud';
-
-  const cardStyle: React.CSSProperties = isFreeLayout
-    ? {
-        position: 'absolute',
-        left: `${pos.x + dragOffset.x}px`,
-        top: `${pos.y + dragOffset.y}px`,
-        zIndex: isFreeDragging ? 50 : 10,
-        boxShadow: isFreeDragging
-          ? '0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 35px var(--theme-accent, rgba(34, 197, 94, 0.4))'
-          : undefined,
-      }
-    : {};
+  const cardStyle: React.CSSProperties = {
+    width: `${effectiveWidth}px`,
+    ['--widget-scale' as string]: scale.toFixed(3),
+    ...(isFreeLayout
+      ? {
+          position: 'absolute',
+          left: `${pos.x + dragOffset.x}px`,
+          top: `${pos.y + dragOffset.y}px`,
+          zIndex: isFreeDragging || isResizing ? 50 : 10,
+          boxShadow:
+            isFreeDragging || isResizing
+              ? '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px var(--theme-accent, rgba(34, 197, 94, 0.35))'
+              : undefined,
+          transition: isFreeDragging || isResizing ? 'none' : 'box-shadow 0.2s',
+        }
+      : {}),
+  };
 
   return (
     <div
@@ -179,18 +239,42 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
       onPointerDown={handlePointerDown}
       className={`shrink-0 flex flex-col rounded-3xl liquid-glass-card p-4 relative group select-none transition-all duration-150 ${
         isFreeLayout ? 'cursor-grab active:cursor-grabbing' : ''
-      } ${isWide ? 'w-[360px] sm:w-[410px]' : 'w-56 sm:w-60'} ${
-        isFreeDragging ? 'ring-2 ring-[var(--theme-accent,#22c55e)] shadow-2xl scale-[1.02]' : ''
-      }`}
+      } ${isFreeDragging ? 'ring-2 ring-[var(--theme-accent,#22c55e)] scale-[1.02]' : ''}`}
     >
       {/* Top Controls Bar - Appears on Hover */}
-      <div
-        className="flex items-center justify-between gap-1 pb-1 mb-1 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-      >
+      <div className="flex items-center justify-between gap-1 pb-1 mb-1 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
         {/* Drag indicator */}
         <div className="flex items-center gap-1 text-slate-400">
           <GripHorizontal className="w-3.5 h-3.5" />
           <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Clock</span>
+        </div>
+
+        {/* Quick Size Presets: S / M / L */}
+        <div className="flex items-center gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10 no-drag text-[9px] font-bold">
+          <button
+            type="button"
+            onClick={() => handleSetPresetWidth('sm')}
+            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="Small Size"
+          >
+            S
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetPresetWidth('md')}
+            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="Medium Size (Default)"
+          >
+            M
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetPresetWidth('lg')}
+            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="Large Size"
+          >
+            L
+          </button>
         </div>
 
         {/* Style switcher */}
@@ -280,20 +364,45 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
       {/* 1. MINIMAL HYBRID DIAL (Clock 1) */}
       {/* ========================================================================= */}
       {currentWatchType === 'hybrid' && (
-        <div className="flex items-center justify-center w-44 h-44 sm:w-48 sm:h-48 select-none relative mx-auto my-auto">
+        <div
+          style={{ width: `${Math.round(180 * scale)}px`, height: `${Math.round(180 * scale)}px` }}
+          className="flex items-center justify-center select-none relative mx-auto my-auto"
+        >
           {/* Frosted Liquid Glass Dial Surface */}
           <div className="relative w-full h-full rounded-full bg-white/[0.06] border border-white/20 shadow-[inset_0_2px_6px_rgba(0,0,0,0.3),0_8px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl flex items-center justify-center p-2">
             {/* Top Right Digital Readout */}
-            <div className="absolute top-6 right-6 flex flex-col items-end leading-none z-10">
-              <span className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">{hoursStr}</span>
-              <span className="text-xl sm:text-2xl font-medium text-slate-400 tracking-tight mt-0.5">{minutesStr}</span>
+            <div
+              style={{
+                top: `${Math.round(20 * scale)}px`,
+                right: `${Math.round(20 * scale)}px`,
+              }}
+              className="absolute flex flex-col items-end leading-none z-10"
+            >
+              <span
+                style={{ fontSize: `${scale * 1.4}rem` }}
+                className="font-black text-white tracking-tight drop-shadow-sm"
+              >
+                {hoursStr}
+              </span>
+              <span
+                style={{ fontSize: `${scale * 1.4}rem` }}
+                className="font-medium text-slate-400 tracking-tight mt-0.5"
+              >
+                {minutesStr}
+              </span>
             </div>
 
             {/* Bottom Day of Week (Follows Accent Color) */}
-            <div className="absolute bottom-5 inset-x-0 flex justify-center z-10">
+            <div
+              style={{ bottom: `${Math.round(16 * scale)}px` }}
+              className="absolute inset-x-0 flex justify-center z-10"
+            >
               <span
-                className="text-[9px] font-bold tracking-[0.22em] uppercase drop-shadow"
-                style={{ color: 'var(--theme-accent, #22c55e)' }}
+                className="font-bold tracking-[0.22em] uppercase drop-shadow"
+                style={{
+                  fontSize: `${Math.max(7, Math.round(9 * scale))}px`,
+                  color: 'var(--theme-accent, #22c55e)',
+                }}
               >
                 {dayName}
               </span>
@@ -353,36 +462,56 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
       {/* 2. STACKED DIGITAL LCD (Clock 2) */}
       {/* ========================================================================= */}
       {currentWatchType === 'stacked' && (
-        <div className="flex items-center justify-between w-44 h-44 sm:w-48 sm:h-48 px-2 select-none mx-auto my-auto">
+        <div
+          style={{
+            width: `${Math.round(195 * scale)}px`,
+            height: `${Math.round(180 * scale)}px`,
+          }}
+          className="flex items-center justify-between px-2 select-none mx-auto my-auto"
+        >
           {/* 2x2 Digits: Hours on top, Minutes on bottom */}
-          <div className="flex flex-col gap-1.5 justify-center">
+          <div style={{ gap: `${Math.round(6 * scale)}px` }} className="flex flex-col justify-center">
             {/* Top Row: Hours */}
-            <div className="flex items-center gap-1.5">
-              <SvgSevenSegment digit={hoursStr[0]} />
-              <SvgSevenSegment digit={hoursStr[1]} />
+            <div style={{ gap: `${Math.round(6 * scale)}px` }} className="flex items-center">
+              <SvgSevenSegment digit={hoursStr[0]} scale={scale} />
+              <SvgSevenSegment digit={hoursStr[1]} scale={scale} />
             </div>
             {/* Bottom Row: Minutes */}
-            <div className="flex items-center gap-1.5">
-              <SvgSevenSegment digit={minutesStr[0]} />
-              <SvgSevenSegment digit={minutesStr[1]} />
+            <div style={{ gap: `${Math.round(6 * scale)}px` }} className="flex items-center">
+              <SvgSevenSegment digit={minutesStr[0]} scale={scale} />
+              <SvgSevenSegment digit={minutesStr[1]} scale={scale} />
             </div>
           </div>
 
           {/* Right Column: Pill Badge & Rotated Date (Follows Accent Color) */}
-          <div className="flex flex-col items-center justify-between h-36 py-2 pl-2 border-l border-white/10">
+          <div
+            style={{ height: `${Math.round(140 * scale)}px` }}
+            className="flex flex-col items-center justify-between py-2 pl-2 border-l border-white/10"
+          >
             {/* Accent vertical pill capsule */}
-            <div className="w-3 h-8 rounded-full bg-white/10 border border-white/20 shadow-inner flex items-center justify-center p-0.5">
+            <div
+              style={{
+                width: `${Math.round(12 * scale)}px`,
+                height: `${Math.round(32 * scale)}px`,
+              }}
+              className="rounded-full bg-white/10 border border-white/20 shadow-inner flex items-center justify-center p-0.5"
+            >
               <div
-                className="w-1.5 h-4 rounded-full transition-all duration-300"
                 style={{
+                  width: `${Math.round(6 * scale)}px`,
+                  height: `${Math.round(16 * scale)}px`,
                   backgroundColor: 'var(--theme-accent, #22c55e)',
                   boxShadow: '0 0 10px var(--theme-accent, #22c55e)',
                 }}
+                className="rounded-full transition-all duration-300"
               />
             </div>
 
             {/* Rotated Date Text */}
-            <div className="rotate-[-90deg] origin-center whitespace-nowrap text-xs font-black tracking-widest text-slate-200">
+            <div
+              style={{ fontSize: `${scale * 0.75}rem` }}
+              className="rotate-[-90deg] origin-center whitespace-nowrap font-black tracking-widest text-slate-200"
+            >
               {dateNumber}, {monthStr}
             </div>
           </div>
@@ -393,7 +522,10 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
       {/* 3. ROMAN MINIMALIST DIAL (Clock 3) */}
       {/* ========================================================================= */}
       {currentWatchType === 'roman' && (
-        <div className="flex items-center justify-center w-44 h-44 sm:w-48 sm:h-48 select-none relative mx-auto my-auto">
+        <div
+          style={{ width: `${Math.round(180 * scale)}px`, height: `${Math.round(180 * scale)}px` }}
+          className="flex items-center justify-center select-none relative mx-auto my-auto"
+        >
           {/* Frosted Circular Dial Surface */}
           <div className="relative w-full h-full rounded-full bg-white/[0.06] border border-white/20 shadow-[inset_0_2px_6px_rgba(0,0,0,0.3),0_8px_20px_rgba(0,0,0,0.4)] backdrop-blur-xl flex items-center justify-center p-2">
             <svg viewBox="0 0 100 100" className="w-full h-full select-none">
@@ -469,12 +601,15 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* 4. GIANT TYPOGRAPHY HUD GRID CLOCK (Clock 4 - Image 1) */}
+      {/* 4. GIANT TYPOGRAPHY HUD GRID CLOCK (Clock 4) */}
       {/* ========================================================================= */}
       {currentWatchType === 'hud' && (
         <div className="py-1 px-2 flex flex-col justify-between w-full select-none">
           {/* Top Labels */}
-          <div className="flex items-center justify-between text-[9px] uppercase font-mono tracking-widest text-slate-400 pb-1 border-b border-white/10">
+          <div
+            style={{ fontSize: `${scale * 0.65}rem` }}
+            className="flex items-center justify-between uppercase font-mono tracking-widest text-slate-400 pb-1 border-b border-white/10"
+          >
             <span className="w-1/3 text-left">hours</span>
             <span className="w-1/3 text-center">minutes</span>
             <span className="w-1/3 text-right">seconds</span>
@@ -484,10 +619,16 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
           <div className="flex items-center justify-between gap-1 py-2 font-mono">
             {/* Hours: e.g. Ø8 */}
             <div className="flex items-center gap-1">
-              <span className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              <span
+                style={{ fontSize: `${scale * 3.25}rem`, lineHeight: 1 }}
+                className="font-black text-white tracking-tight drop-shadow-md"
+              >
                 {hoursStr[0] === '0' ? 'Ø' : hoursStr[0]}
               </span>
-              <span className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              <span
+                style={{ fontSize: `${scale * 3.25}rem`, lineHeight: 1 }}
+                className="font-black text-white tracking-tight drop-shadow-md"
+              >
                 {hoursStr[1]}
               </span>
             </div>
@@ -495,21 +636,35 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
             {/* Accent Colon */}
             <div className="flex flex-col gap-1.5 py-1 px-1">
               <span
-                className="w-1.5 h-1.5 rounded-sm"
-                style={{ backgroundColor: 'var(--theme-accent, #22c55e)' }}
+                style={{
+                  width: `${Math.max(4, Math.round(6 * scale))}px`,
+                  height: `${Math.max(4, Math.round(6 * scale))}px`,
+                  backgroundColor: 'var(--theme-accent, #22c55e)',
+                }}
+                className="rounded-sm"
               />
               <span
-                className="w-1.5 h-1.5 rounded-sm"
-                style={{ backgroundColor: 'var(--theme-accent, #22c55e)' }}
+                style={{
+                  width: `${Math.max(4, Math.round(6 * scale))}px`,
+                  height: `${Math.max(4, Math.round(6 * scale))}px`,
+                  backgroundColor: 'var(--theme-accent, #22c55e)',
+                }}
+                className="rounded-sm"
               />
             </div>
 
             {/* Minutes: e.g. 59 */}
             <div className="flex items-center gap-1">
-              <span className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              <span
+                style={{ fontSize: `${scale * 3.25}rem`, lineHeight: 1 }}
+                className="font-black text-white tracking-tight drop-shadow-md"
+              >
                 {minutesStr[0]}
               </span>
-              <span className="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md">
+              <span
+                style={{ fontSize: `${scale * 3.25}rem`, lineHeight: 1 }}
+                className="font-black text-white tracking-tight drop-shadow-md"
+              >
                 {minutesStr[1]}
               </span>
             </div>
@@ -517,52 +672,90 @@ export const WatchWidgetCard: React.FC<WatchWidgetCardProps> = ({
             {/* Accent Colon */}
             <div className="flex flex-col gap-1.5 py-1 px-1">
               <span
-                className="w-1.5 h-1.5 rounded-sm"
-                style={{ backgroundColor: 'var(--theme-accent, #22c55e)' }}
+                style={{
+                  width: `${Math.max(4, Math.round(6 * scale))}px`,
+                  height: `${Math.max(4, Math.round(6 * scale))}px`,
+                  backgroundColor: 'var(--theme-accent, #22c55e)',
+                }}
+                className="rounded-sm"
               />
               <span
-                className="w-1.5 h-1.5 rounded-sm"
-                style={{ backgroundColor: 'var(--theme-accent, #22c55e)' }}
+                style={{
+                  width: `${Math.max(4, Math.round(6 * scale))}px`,
+                  height: `${Math.max(4, Math.round(6 * scale))}px`,
+                  backgroundColor: 'var(--theme-accent, #22c55e)',
+                }}
+                className="rounded-sm"
               />
             </div>
 
             {/* Seconds: Stacked scrolling tape */}
             <div className="flex flex-col items-center justify-center font-mono leading-none border-l border-white/10 pl-2">
-              <span className="text-[10px] text-slate-500 font-bold -mb-0.5">
+              <span
+                style={{ fontSize: `${scale * 0.65}rem` }}
+                className="text-slate-500 font-bold -mb-0.5"
+              >
                 {String((seconds + 59) % 60).padStart(2, '0')}
               </span>
               <span
-                className="text-2xl sm:text-3xl font-black tracking-tight drop-shadow"
-                style={{ color: 'var(--theme-accent, #22c55e)' }}
+                style={{
+                  fontSize: `${scale * 1.8}rem`,
+                  color: 'var(--theme-accent, #22c55e)',
+                }}
+                className="font-black tracking-tight drop-shadow"
               >
                 {secondsStr}
               </span>
-              <span className="text-[10px] text-slate-500 font-bold -mt-0.5">
+              <span
+                style={{ fontSize: `${scale * 0.65}rem` }}
+                className="text-slate-500 font-bold -mt-0.5"
+              >
                 {String((seconds + 1) % 60).padStart(2, '0')}
               </span>
             </div>
           </div>
 
           {/* Bottom Status Dots (Follows Accent Color) */}
-          <div className="flex items-center justify-between pt-1.5 border-t border-white/10 text-[9px] font-mono text-slate-400">
+          <div
+            style={{ fontSize: `${scale * 0.65}rem` }}
+            className="flex items-center justify-between pt-1.5 border-t border-white/10 font-mono text-slate-400"
+          >
             <div className="flex items-center gap-1.5">
               {[...Array(6)].map((_, i) => (
                 <span
                   key={i}
-                  className="w-1.5 h-1.5 rounded-full transition-all duration-300"
                   style={{
+                    width: `${Math.max(3, Math.round(5 * scale))}px`,
+                    height: `${Math.max(3, Math.round(5 * scale))}px`,
                     backgroundColor: i === Math.floor(seconds / 10) ? 'var(--theme-accent, #22c55e)' : 'rgba(255,255,255,0.2)',
                     boxShadow: i === Math.floor(seconds / 10) ? '0 0 8px var(--theme-accent, #22c55e)' : 'none',
                   }}
+                  className="rounded-full transition-all duration-300"
                 />
               ))}
             </div>
-            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-wider">
+            <span
+              style={{ fontSize: `${scale * 0.7}rem` }}
+              className="font-bold text-slate-300 uppercase tracking-wider"
+            >
               {fullDateStr}
             </span>
           </div>
         </div>
       )}
+
+      {/* Interactive Bottom-Right Corner Resize Grip Handle */}
+      <div
+        onPointerDown={handleResizePointerDown}
+        className="absolute bottom-1 right-1 w-5 h-5 cursor-nwse-resize text-slate-400 hover:text-[var(--theme-accent,#22c55e)] opacity-0 group-hover:opacity-60 hover:!opacity-100 transition-all flex items-end justify-end p-0.5 select-none no-drag z-20"
+        title="Click & drag to resize clock"
+      >
+        <svg viewBox="0 0 6 6" className="w-2.5 h-2.5 fill-current">
+          <circle cx="5" cy="5" r="0.75" />
+          <circle cx="5" cy="2.5" r="0.75" />
+          <circle cx="2.5" cy="5" r="0.75" />
+        </svg>
+      </div>
     </div>
   );
 };

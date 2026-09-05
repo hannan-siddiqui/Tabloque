@@ -198,7 +198,7 @@ export const AuthCardColumn: React.FC<AuthCardColumnProps> = ({
           ) : (
             <h3
               onDoubleClick={() => setIsEditingTitle(true)}
-              className="text-sm font-bold text-white tracking-wide truncate leading-tight cursor-text"
+              className="text-sm font-bold text-white tracking-wide truncate leading-tight cursor-text board-header-title"
               title="Double click to rename • Drag header to move"
             >
               {board.title}

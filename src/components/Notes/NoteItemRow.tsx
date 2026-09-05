@@ -127,7 +127,7 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({
       <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/5">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {note.isPinned && <Pin className="w-3 h-3 text-[var(--theme-accent,#22c55e)] shrink-0" />}
-          <h4 className="text-xs font-bold text-white truncate group-hover/note:text-[var(--theme-accent,#22c55e)] transition-colors">
+          <h4 className="text-xs font-bold text-white truncate group-hover/note:text-[var(--theme-accent,#22c55e)] transition-colors bookmark-item-title">
             {note.title}
           </h4>
         </div>

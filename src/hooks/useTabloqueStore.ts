@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TabloqueState, Page, Board, Bookmark, FirebaseConfig, ThemeId, WatchType, WatchWidget, TypographyConfig, BorderConfig, AppTabId, AuthBoard, AuthItem, NoteBoard, NoteItem } from '../types';
+import { TabloqueState, Page, Board, Bookmark, FirebaseConfig, ThemeId, WatchType, WatchWidget, CalendarType, CalendarWidget, TypographyConfig, BorderConfig, AppTabId, AuthBoard, AuthItem, NoteBoard, NoteItem } from '../types';
 import { loadStateFromStorage, saveStateToStorage, onStorageChange } from '../storage/chrome-storage';
 import { INITIAL_STATE } from '../storage/initial-data';
 import { ParsedBookmarkGroup } from '../services/bookmark-importer';
@@ -35,6 +35,21 @@ export function useTabloqueStore() {
           }
           if (!w.pageId) {
             w.pageId = defaultPageId;
+          }
+        });
+      }
+      if (!savedState.calendars) {
+        savedState.calendars = {};
+        savedState.calendarOrder = [];
+      } else {
+        const validCalTypes: CalendarType[] = ['monthly', 'compact', 'split', 'strip'];
+        const defaultPageId = savedState.activePageId || Object.keys(savedState.pages)[0] || 'page-1';
+        Object.values(savedState.calendars).forEach((c) => {
+          if (!validCalTypes.includes(c.type)) {
+            c.type = 'monthly';
+          }
+          if (!c.pageId) {
+            c.pageId = defaultPageId;
           }
         });
       }
@@ -152,6 +167,15 @@ export function useTabloqueStore() {
       });
       const remainingWatchOrder = (prev.watchOrder || []).filter((id) => remainingWatches[id]);
 
+      // Clean up calendars for this page
+      const remainingCalendars = { ...(prev.calendars || {}) };
+      Object.entries(remainingCalendars).forEach(([cId, c]) => {
+        if (c.pageId === pageId) {
+          delete remainingCalendars[cId];
+        }
+      });
+      const remainingCalendarOrder = (prev.calendarOrder || []).filter((id) => remainingCalendars[id]);
+
       return {
         ...prev,
         pages: newPages,
@@ -159,6 +183,8 @@ export function useTabloqueStore() {
         activePageId: newActivePageId,
         watches: remainingWatches,
         watchOrder: remainingWatchOrder,
+        calendars: remainingCalendars,
+        calendarOrder: remainingCalendarOrder,
       };
     });
   }, []);
@@ -579,6 +605,80 @@ export function useTabloqueStore() {
     });
   }, []);
 
+  // --- Calendar Widget Management ---
+  const addCalendar = useCallback((type: CalendarType = 'monthly') => {
+    const calId = 'cal-' + Date.now();
+    setState((prev) => {
+      const activePageId = prev.activePageId;
+      const newCal: CalendarWidget = {
+        id: calId,
+        pageId: activePageId,
+        type,
+        position: { x: 380, y: 16 },
+        createdAt: Date.now(),
+      };
+
+      const calendars = { ...(prev.calendars || {}), [calId]: newCal };
+      const calendarOrder = [...(prev.calendarOrder || []), calId];
+
+      const activePage = prev.pages[activePageId];
+      const pages = activePage
+        ? {
+            ...prev.pages,
+            [activePageId]: {
+              ...activePage,
+              calendarIds: [...(activePage.calendarIds || []), calId],
+            },
+          }
+        : prev.pages;
+
+      return {
+        ...prev,
+        pages,
+        calendars,
+        calendarOrder,
+      };
+    });
+  }, []);
+
+  const updateCalendar = useCallback((calId: string, updates: Partial<CalendarWidget>) => {
+    setState((prev) => {
+      const existing = prev.calendars?.[calId];
+      if (!existing) return prev;
+      return {
+        ...prev,
+        calendars: {
+          ...prev.calendars,
+          [calId]: { ...existing, ...updates },
+        },
+      };
+    });
+  }, []);
+
+  const deleteCalendar = useCallback((calId: string) => {
+    setState((prev) => {
+      if (!prev.calendars?.[calId]) return prev;
+      const targetCal = prev.calendars[calId];
+      const { [calId]: _, ...remainingCalendars } = prev.calendars;
+      const newCalendarOrder = (prev.calendarOrder || []).filter((id) => id !== calId);
+
+      const newPages = { ...prev.pages };
+      if (targetCal.pageId && newPages[targetCal.pageId]) {
+        newPages[targetCal.pageId] = {
+          ...newPages[targetCal.pageId],
+          calendarIds: (newPages[targetCal.pageId].calendarIds || []).filter((id) => id !== calId),
+        };
+      }
+
+      return {
+        ...prev,
+        pages: newPages,
+        calendars: remainingCalendars,
+        calendarOrder: newCalendarOrder,
+      };
+    });
+  }, []);
+
   const setActiveTab = useCallback((tab: AppTabId) => {
     setState((prev) => ({ ...prev, activeTab: tab }));
   }, []);
@@ -858,6 +958,9 @@ export function useTabloqueStore() {
     addWatch,
     updateWatch,
     deleteWatch,
+    addCalendar,
+    updateCalendar,
+    deleteCalendar,
     setActiveTab,
     createAuthBoard,
     updateAuthBoard,

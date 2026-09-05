@@ -183,6 +183,26 @@
 .font-size-large .board-header-title { font-size: 1.0625rem !important; }
 .font-size-xlarge .board-header-title { font-size: 1.25rem !important; }
 
+/* Typography Styling (Color, Weight, Transform, Tracking) for Bookmark & Board Text */
+.bookmark-item-title,
+.board-header-title {
+  color: var(--custom-text-color, #ffffff) !important;
+  font-weight: var(--custom-font-weight, 500) !important;
+  text-transform: var(--custom-text-transform, none) !important;
+  letter-spacing: var(--custom-letter-spacing, normal) !important;
+  transition: color 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.bookmark-item-title:hover,
+.group:hover .bookmark-item-title,
+.group\/note:hover .bookmark-item-title {
+  filter: brightness(1.25);
+}
+
+.board-header-title:hover {
+  filter: brightness(1.2);
+}
+
 /* Custom Sleek Liquid Glass Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;

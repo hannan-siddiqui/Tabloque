@@ -18,10 +18,11 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { Plus, LayoutGrid, Columns3, Move } from 'lucide-react';
-import { Page, Board, Bookmark, WatchWidget } from '../../types';
+import { Page, Board, Bookmark, WatchWidget, CalendarWidget } from '../../types';
 import { BoardColumn } from './BoardColumn';
 import { DragOverlayWrapper } from '../Dnd/DragOverlayWrapper';
 import { WatchWidgetCard } from '../Widgets/WatchWidgetCard';
+import { CalendarWidgetCard } from '../Widgets/CalendarWidgetCard';
 
 interface BoardCanvasProps {
   activePage: Page;
@@ -32,8 +33,12 @@ interface BoardCanvasProps {
   isEditMode?: boolean;
   watches?: Record<string, WatchWidget>;
   watchOrder?: string[];
+  calendars?: Record<string, CalendarWidget>;
+  calendarOrder?: string[];
   onUpdateWatch?: (watchId: string, updates: Partial<WatchWidget>) => void;
   onDeleteWatch?: (watchId: string) => void;
+  onUpdateCalendar?: (calendarId: string, updates: Partial<CalendarWidget>) => void;
+  onDeleteCalendar?: (calendarId: string) => void;
   onReorderBoards: (boardIds: string[]) => void;
   onReorderBookmarks: (boardId: string, bookmarkIds: string[]) => void;
   onMoveBookmark: (
@@ -61,8 +66,12 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
   isEditMode = false,
   watches = {},
   watchOrder = [],
+  calendars = {},
+  calendarOrder = [],
   onUpdateWatch,
   onDeleteWatch,
+  onUpdateCalendar,
+  onDeleteCalendar,
   onReorderBoards,
   onReorderBookmarks,
   onMoveBookmark,
@@ -275,6 +284,22 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
               );
             })}
 
+            {/* Calendar Widgets (Draggable anywhere) */}
+            {(calendarOrder.length > 0 ? calendarOrder : Object.keys(calendars)).map((cId, cIdx) => {
+              const calendar = calendars[cId];
+              if (!calendar) return null;
+              return (
+                <CalendarWidgetCard
+                  key={calendar.id}
+                  calendar={calendar}
+                  layoutMode="free"
+                  defaultPosition={{ x: 420, y: 16 + cIdx * 240 }}
+                  onUpdateCalendar={onUpdateCalendar || (() => {})}
+                  onDeleteCalendar={onDeleteCalendar || (() => {})}
+                />
+              );
+            })}
+
             {boardIds.map((bId, idx) => {
               const board = boards[bId];
               if (!board) return null;
@@ -317,6 +342,21 @@ export const BoardCanvas: React.FC<BoardCanvasProps> = ({
                   layoutMode={currentLayout}
                   onUpdateWatch={onUpdateWatch || (() => {})}
                   onDeleteWatch={onDeleteWatch || (() => {})}
+                />
+              );
+            })}
+
+            {/* Calendar Widgets */}
+            {(calendarOrder.length > 0 ? calendarOrder : Object.keys(calendars)).map((cId) => {
+              const calendar = calendars[cId];
+              if (!calendar) return null;
+              return (
+                <CalendarWidgetCard
+                  key={calendar.id}
+                  calendar={calendar}
+                  layoutMode={currentLayout}
+                  onUpdateCalendar={onUpdateCalendar || (() => {})}
+                  onDeleteCalendar={onDeleteCalendar || (() => {})}
                 />
               );
             })}

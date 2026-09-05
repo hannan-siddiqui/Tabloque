@@ -928,7 +928,7 @@ export function useTabloqueStore() {
     setState((prev) => ({
       ...prev,
       borderConfig: {
-        style: prev.borderConfig?.style || 'luminous',
+        style: prev.borderConfig?.style || 'subtle',
         accentGlow: prev.borderConfig?.accentGlow ?? false,
         ...updates,
       },

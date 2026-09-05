@@ -174,7 +174,7 @@ export const INITIAL_STATE: TabloqueState = {
     letterSpacing: 'normal',
   },
   borderConfig: {
-    style: 'luminous',
+    style: 'subtle',
     accentGlow: false,
   },
   watches: {

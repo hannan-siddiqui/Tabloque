@@ -364,24 +364,24 @@ export const CalendarWidgetCard: React.FC<CalendarWidgetCardProps> = ({
       } ${isFreeDragging ? 'ring-2 ring-[var(--theme-accent,#22c55e)] scale-[1.02]' : ''}`}
     >
       {/* Top Header Controls (Drag Handle, Style Switcher, S/M/L Presets, Today Jump, Delete) */}
-      <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-white/10">
+      <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-white/10 w-full min-w-0">
         {/* Left: Drag grip & Calendar title */}
-        <div className="flex items-center gap-1.5 text-slate-400">
-          <div className="cursor-grab p-1 hover:text-white transition-colors" title="Drag Calendar Widget">
+        <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+          <div className="cursor-grab p-0.5 hover:text-white transition-colors" title="Drag Calendar Widget">
             <GripHorizontal className="w-3.5 h-3.5" />
           </div>
           <span className="text-[11px] font-bold text-slate-200 tracking-wider uppercase flex items-center gap-1.5">
             <CalendarIcon className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
-            <span>Calendar</span>
+            {effectiveWidth >= 340 && <span>Calendar</span>}
           </span>
         </div>
 
         {/* Quick Size Presets: S / M / L */}
-        <div className="flex items-center gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10 no-drag text-[9px] font-bold">
+        <div className="flex items-center gap-0.5 bg-white/5 p-0.5 rounded-lg border border-white/10 no-drag text-[9px] font-bold shrink-0">
           <button
             type="button"
             onClick={() => handleSetPresetWidth('sm')}
-            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="px-1 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Small Size"
           >
             S
@@ -389,7 +389,7 @@ export const CalendarWidgetCard: React.FC<CalendarWidgetCardProps> = ({
           <button
             type="button"
             onClick={() => handleSetPresetWidth('md')}
-            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="px-1 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Medium Size (Default)"
           >
             M
@@ -397,7 +397,7 @@ export const CalendarWidgetCard: React.FC<CalendarWidgetCardProps> = ({
           <button
             type="button"
             onClick={() => handleSetPresetWidth('lg')}
-            className="px-1.5 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="px-1 py-0.5 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
             title="Large Size"
           >
             L
@@ -405,30 +405,29 @@ export const CalendarWidgetCard: React.FC<CalendarWidgetCardProps> = ({
         </div>
 
         {/* Center: Style Switcher Carousel */}
-        <div className="flex items-center gap-0.5 no-drag bg-white/5 px-1.5 py-0.5 rounded-xl border border-white/10">
+        <div className="flex items-center gap-0.5 no-drag bg-white/5 px-1 py-0.5 rounded-lg border border-white/10 shrink-0">
           <button
             type="button"
             onClick={handlePrevStyle}
-            className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="p-0.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
             title="Previous calendar style"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
+            <ChevronLeft className="w-3 h-3" />
           </button>
 
           <div className="relative no-drag">
             <button
               type="button"
               onClick={() => setStyleDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-semibold text-slate-200 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center px-1 text-[10px] font-semibold text-slate-200 hover:bg-white/10 rounded transition-colors cursor-pointer"
             >
               <span>{currentIndex + 1}/4</span>
-              <ChevronDown className="w-3 h-3 text-slate-400" />
             </button>
 
             {styleDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setStyleDropdownOpen(false)} />
-                <div className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-50 animate-fade-in text-xs space-y-1">
+                <div className="absolute left-0 top-full mt-1.5 w-56 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-50 animate-fade-in text-xs space-y-1">
                   <div className="px-2 py-1 text-[10px] uppercase font-bold tracking-wider text-slate-400 border-b border-white/10 flex items-center justify-between">
                     <span>Choose Calendar</span>
                     <Sparkles className="w-3 h-3 text-[var(--theme-accent,#22c55e)]" />
@@ -462,15 +461,15 @@ export const CalendarWidgetCard: React.FC<CalendarWidgetCardProps> = ({
           <button
             type="button"
             onClick={handleNextStyle}
-            className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="p-0.5 rounded hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
             title="Next calendar style"
           >
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-3 h-3" />
           </button>
         </div>
 
         {/* Right: Quick "Today" jump & Delete button */}
-        <div className="flex items-center gap-1 no-drag">
+        <div className="flex items-center gap-1 no-drag shrink-0">
           <button
             type="button"
             onClick={handleResetToday}

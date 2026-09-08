@@ -12,6 +12,7 @@ interface NotesCanvasProps {
   onUpdateBoard: (boardId: string, updates: Partial<NoteBoard>) => void;
   onDeleteBoard: (boardId: string) => void;
   onAddNote: (boardId: string) => void;
+  onViewNote: (note: NoteItem) => void;
   onEditNote: (note: NoteItem) => void;
   onDeleteNote: (noteId: string) => void;
 }
@@ -25,6 +26,7 @@ export const NotesCanvas: React.FC<NotesCanvasProps> = ({
   onUpdateBoard,
   onDeleteBoard,
   onAddNote,
+  onViewNote,
   onEditNote,
   onDeleteNote,
 }) => {
@@ -85,7 +87,7 @@ export const NotesCanvas: React.FC<NotesCanvasProps> = ({
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[var(--theme-accent,#22c55e)] animate-pulse" />
           <span className="font-semibold text-slate-300">Notes Workspace</span>
-          <span className="text-slate-500">• Drag card header to place anywhere • Drag corner to resize cards • Click note to edit</span>
+          <span className="text-slate-500">• Drag header to move • Drag corner to resize • Click note to read (Side/Full screen) • 3 dots to edit</span>
         </div>
         <button
           type="button"
@@ -111,6 +113,7 @@ export const NotesCanvas: React.FC<NotesCanvasProps> = ({
               onAddNote={onAddNote}
               onUpdateBoard={onUpdateBoard}
               onDeleteBoard={onDeleteBoard}
+              onViewNote={onViewNote}
               onEditNote={onEditNote}
               onDeleteNote={onDeleteNote}
               onToast={showToast}

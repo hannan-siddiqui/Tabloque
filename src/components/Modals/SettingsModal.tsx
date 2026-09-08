@@ -11,7 +11,11 @@ import {
   Check, 
   Sparkles,
   Type,
-  Sliders
+  Sliders,
+  Image as ImageIcon,
+  RotateCcw,
+  Sun,
+  Eye,
 } from 'lucide-react';
 import { 
   FirebaseConfig, 
@@ -48,6 +52,19 @@ interface SettingsModalProps {
   currentState: TabloqueState;
   onResetToDefault: () => void;
   onRestoreBackup?: (state: TabloqueState) => void;
+  customThemeColor?: string | null;
+  onSelectCustomThemeColor?: (color: string | null) => void;
+  customBackgroundImage?: string | null;
+  onSelectCustomBackgroundImage?: (image: string | null) => void;
+  backgroundBlur?: number;
+  onUpdateBackgroundBlur?: (blur: number) => void;
+  backgroundBrightness?: number;
+  onUpdateBackgroundBrightness?: (brightness: number) => void;
+  cardGlassBlur?: number;
+  onUpdateCardGlassBlur?: (blur: number) => void;
+  cardGlassOpacity?: number;
+  onUpdateCardGlassOpacity?: (opacity: number) => void;
+  onOpenBackgroundCustomizer?: () => void;
 }
 
 const FONT_OPTIONS: { id: FontFamilyId; name: string; desc: string; sampleClass: string }[] = [
@@ -124,6 +141,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentState,
   onResetToDefault,
   onRestoreBackup,
+  customThemeColor,
+  onSelectCustomThemeColor,
+  customBackgroundImage,
+  onSelectCustomBackgroundImage,
+  backgroundBlur = 0,
+  onUpdateBackgroundBlur,
+  backgroundBrightness = 100,
+  onUpdateBackgroundBrightness,
+  cardGlassBlur = 4,
+  onUpdateCardGlassBlur,
+  cardGlassOpacity = 25,
+  onUpdateCardGlassOpacity,
+  onOpenBackgroundCustomizer,
 }) => {
   const [activeTab, setActiveTab] = useState<'theme' | 'typography' | 'borders' | 'privacy' | 'sync' | 'backup'>('theme');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -205,8 +235,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="w-full md:w-56 bg-black/35 border-b md:border-b-0 md:border-r border-white/10 p-5 flex flex-col justify-between shrink-0">
           <div className="space-y-6">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl liquid-glass-pill text-emerald-400 flex items-center justify-center border border-emerald-400/30">
-                <Sparkles className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl liquid-glass-pill flex items-center justify-center border border-white/20 overflow-hidden p-0.5 shadow-sm">
+                <img src="/icons/TabLoque.png" alt="TabLoque Logo" className="w-full h-full object-contain rounded-lg" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">Settings</h3>
@@ -295,8 +325,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </nav>
           </div>
 
-          <div className="pt-4 border-t border-white/10 text-[11px] text-slate-400">
-            TabLoque Liquid Glass v1.0
+          <div className="pt-4 border-t border-white/10 text-[11px] text-slate-400 flex items-center gap-2">
+            <img src="/icons/TabLoque.png" alt="TabLoque Logo" className="w-4 h-4 object-contain rounded" />
+            <span>TabLoque Liquid Glass v1.0</span>
           </div>
         </div>
 
@@ -323,46 +354,299 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* TAB 1: THEMES */}
             {activeTab === 'theme' && (
-              <div className="space-y-4">
-                <p className="text-xs text-slate-300">
-                  Select your favorite visual style and ambient wallpaper background:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {(Object.keys(THEMES) as ThemeId[]).map((tId) => {
-                    const t = THEMES[tId];
-                    const isSelected = currentTheme === tId;
-
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => onSelectTheme(t.id)}
-                        className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
-                          isSelected
-                            ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_20px_rgba(34,197,94,0.3)] ring-1 ring-emerald-400/50'
-                            : 'border-white/10 liquid-glass hover:border-white/25 hover:bg-white/[0.06]'
-                        }`}
+              <div className="space-y-6">
+                {/* Custom Color & Wallpaper Quick Bar */}
+                <div className="p-4 rounded-2xl liquid-glass border border-white/15 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className="w-8 h-8 rounded-xl shadow-md flex items-center justify-center border border-white/20"
+                        style={{ backgroundColor: customThemeColor || 'var(--theme-accent, #22c55e)' }}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${t.previewColor} shadow-md flex items-center justify-center`}>
-                            {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                          </div>
-                          {isSelected && (
-                            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40">
-                              Active
+                        <Palette className="w-4 h-4 text-white drop-shadow" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs font-bold text-white">Custom Accent Color</h4>
+                          {customThemeColor && (
+                            <span className="text-[10px] font-mono font-bold bg-white/15 text-[var(--theme-accent,#22c55e)] px-2 py-0.5 rounded-full border border-white/20 uppercase">
+                              Active: {customThemeColor}
                             </span>
                           )}
                         </div>
-                        <h5 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
-                          {t.name}
-                        </h5>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                          {t.description}
+                        <p className="text-[11px] text-slate-400">
+                          Choose any custom color to override the predefined themes
                         </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {onOpenBackgroundCustomizer && (
+                        <button
+                          type="button"
+                          onClick={onOpenBackgroundCustomizer}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold border border-white/20 transition-all cursor-pointer"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                          <span>Custom Wallpaper</span>
+                        </button>
+                      )}
+
+                      {customThemeColor && onSelectCustomThemeColor && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectCustomThemeColor(null)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-medium border border-white/10 transition-colors cursor-pointer"
+                          title="Reset to predefined theme"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Reset Color</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Color Picker & Swatches */}
+                  {onSelectCustomThemeColor && (
+                    <div className="flex flex-wrap items-center gap-2.5 pt-1 border-t border-white/10">
+                      <label className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/15 hover:border-white/30 cursor-pointer transition-colors text-xs font-semibold text-slate-200">
+                        <input
+                          type="color"
+                          value={customThemeColor || '#22c55e'}
+                          onChange={(e) => onSelectCustomThemeColor(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 outline-none"
+                        />
+                        <span>Pick Any Color</span>
+                      </label>
+
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {['#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b', '#14b8a6', '#e2e8f0'].map((hex) => (
+                          <button
+                            key={hex}
+                            type="button"
+                            onClick={() => onSelectCustomThemeColor(hex)}
+                            className={`w-6 h-6 rounded-lg transition-transform hover:scale-110 cursor-pointer border ${
+                              (customThemeColor || '').toLowerCase() === hex.toLowerCase()
+                                ? 'ring-2 ring-white border-white scale-110'
+                                : 'border-white/20'
+                            }`}
+                            style={{ backgroundColor: hex }}
+                            title={hex}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-300 font-semibold">
+                    Or select from Predefined Themes & Ambient Silk Waves:
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {(Object.keys(THEMES) as ThemeId[]).map((tId) => {
+                      const t = THEMES[tId];
+                      const isSelected = currentTheme === tId && !customThemeColor;
+
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => {
+                            onSelectTheme(t.id);
+                            if (onSelectCustomThemeColor) onSelectCustomThemeColor(null);
+                            if (customBackgroundImage && onSelectCustomBackgroundImage) {
+                              onSelectCustomBackgroundImage(null);
+                            }
+                          }}
+                          className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden group cursor-pointer ${
+                            isSelected
+                              ? 'border-emerald-400 bg-emerald-500/15 shadow-[0_0_20px_rgba(34,197,94,0.3)] ring-1 ring-emerald-400/50'
+                              : 'border-white/10 liquid-glass hover:border-white/25 hover:bg-white/[0.06]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${t.previewColor} shadow-md flex items-center justify-center`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                            {isSelected && (
+                              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 border border-emerald-400/40">
+                                Active
+                              </span>
+                            )}
+                          </div>
+                          <h5 className="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
+                            {t.name}
+                          </h5>
+                          <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
+                            {t.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Wallpaper Banner if active */}
+                {customBackgroundImage && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 text-xs text-amber-200">
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+                      <span>
+                        Custom wallpaper is active and overriding theme waves.
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {onSelectCustomBackgroundImage && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectCustomBackgroundImage(null)}
+                          className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-semibold border border-amber-400/30 transition-colors cursor-pointer text-xs"
+                        >
+                          Switch to Silk Waves
+                        </button>
+                      )}
+                      {onOpenBackgroundCustomizer && (
+                        <button
+                          type="button"
+                          onClick={onOpenBackgroundCustomizer}
+                          className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold border border-white/20 transition-colors cursor-pointer text-xs"
+                        >
+                          Edit Wallpaper
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Display & Glassmorphism Adjustments (Universal for all themes and wallpapers) */}
+                <div className="p-4 rounded-2xl liquid-glass border border-white/15 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                        <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Display, Brightness & Glass Adjustments</span>
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                        Applies live across all themes & wallpapers
+                      </p>
+                    </div>
+                    {(onUpdateBackgroundBrightness || onUpdateBackgroundBlur || onUpdateCardGlassBlur || onUpdateCardGlassOpacity) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onUpdateBackgroundBrightness?.(100);
+                          onUpdateBackgroundBlur?.(0);
+                          onUpdateCardGlassBlur?.(4);
+                          onUpdateCardGlassOpacity?.(25);
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-[11px] font-semibold transition-colors cursor-pointer"
+                        title="Reset brightness, blur, and glass settings to defaults"
+                      >
+                        <RotateCcw className="w-3 h-3 text-emerald-400" />
+                        <span>Reset Defaults</span>
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Brightness / Dimming */}
+                    {onUpdateBackgroundBrightness && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 flex items-center gap-1.5">
+                            <Sun className="w-3 h-3 text-amber-400" />
+                            Brightness (Dimming)
+                          </span>
+                          <span className="font-mono text-slate-400">{backgroundBrightness}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="20"
+                          max="100"
+                          value={backgroundBrightness}
+                          onChange={(e) => onUpdateBackgroundBrightness(Number(e.target.value))}
+                          className="w-full accent-emerald-400 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-500">
+                          Adjust background brightness for both wallpapers and theme waves.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Background Blur */}
+                    {onUpdateBackgroundBlur && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 flex items-center gap-1.5">
+                            <Eye className="w-3 h-3 text-cyan-400" />
+                            Background Blur
+                          </span>
+                          <span className="font-mono text-slate-400">{backgroundBlur}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="25"
+                          value={backgroundBlur}
+                          onChange={(e) => onUpdateBackgroundBlur(Number(e.target.value))}
+                          className="w-full accent-emerald-400 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-500">
+                          Blurs background (wallpaper or theme waves) behind cards.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Card Glass Blur */}
+                    {onUpdateCardGlassBlur && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 flex items-center gap-1.5 font-medium">
+                            <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                            Card Glass Blur (See-Through)
+                          </span>
+                          <span className="font-mono text-emerald-400 font-bold">{cardGlassBlur}px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={cardGlassBlur}
+                          onChange={(e) => onUpdateCardGlassBlur(Number(e.target.value))}
+                          className="w-full accent-emerald-400 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                          Set to <strong className="text-emerald-300">0px</strong> for 100% sharp see-through cards!
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Card Glass Opacity */}
+                    {onUpdateCardGlassOpacity && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 flex items-center gap-1.5 font-medium">
+                            <Sliders className="w-3.5 h-3.5 text-purple-400" />
+                            Card Glass Tint / Darkness
+                          </span>
+                          <span className="font-mono text-purple-300 font-bold">{cardGlassOpacity}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="8"
+                          max="70"
+                          value={cardGlassOpacity}
+                          onChange={(e) => onUpdateCardGlassOpacity(Number(e.target.value))}
+                          className="w-full accent-purple-400 cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400">
+                          Lower value makes cards more transparent so background shows through.
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

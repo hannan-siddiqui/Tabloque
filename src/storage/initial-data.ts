@@ -244,4 +244,10 @@ export const INITIAL_STATE: TabloqueState = {
   noteBoardOrder: ['note-board-1'],
   firebaseConfig: null,
   lastSyncedAt: null,
+  customThemeColor: null,
+  customBackgroundImage: null,
+  backgroundBlur: 0,
+  backgroundBrightness: 100,
+  cardGlassBlur: 4,
+  cardGlassOpacity: 25,
 };

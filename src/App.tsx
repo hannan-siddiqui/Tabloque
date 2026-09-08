@@ -11,13 +11,16 @@ import { SettingsModal } from './components/Modals/SettingsModal';
 import { AddBookmarkModal } from './components/Modals/AddBookmarkModal';
 import { AddBoardModal } from './components/Modals/AddBoardModal';
 import { Bookmark, ThemeId, WatchWidget, CalendarWidget, AuthItem, NoteItem } from './types';
-import { THEMES } from './theme/themes';
+import { THEMES, createCustomTheme } from './theme/themes';
 import { INITIAL_STATE } from './storage/initial-data';
 import { AuthCanvas } from './components/Auth/AuthCanvas';
 import { NotesCanvas } from './components/Notes/NotesCanvas';
 import { AddAuthModal } from './components/Modals/AddAuthModal';
 import { AddNoteModal } from './components/Modals/AddNoteModal';
 import { AddSimpleCardModal } from './components/Modals/AddSimpleCardModal';
+import { NoteReaderModal } from './components/Notes/NoteReaderModal';
+import { BackgroundCustomizerModal } from './components/Modals/BackgroundCustomizerModal';
+import { Eye } from 'lucide-react';
 
 export const App: React.FC = () => {
   const {
@@ -38,6 +41,12 @@ export const App: React.FC = () => {
     reorderBookmarksInBoard,
     togglePrivacyMode,
     setTheme,
+    setCustomThemeColor,
+    setCustomBackgroundImage,
+    setBackgroundBlur,
+    setBackgroundBrightness,
+    setCardGlassBlur,
+    setCardGlassOpacity,
     updateTypography,
     updateBorderConfig,
     addWatch,
@@ -70,6 +79,8 @@ export const App: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
   const [isAddBoardOpen, setIsAddBoardOpen] = useState(false);
   const [bookmarkModalTargetBoardId, setBookmarkModalTargetBoardId] = useState<string | null>(null);
   const [bookmarkToEdit, setBookmarkToEdit] = useState<Bookmark | null>(null);
@@ -84,6 +95,8 @@ export const App: React.FC = () => {
   const [isAddNoteItemOpen, setIsAddNoteItemOpen] = useState(false);
   const [noteTargetBoardId, setNoteTargetBoardId] = useState<string | null>(null);
   const [noteToEdit, setNoteToEdit] = useState<NoteItem | null>(null);
+  const [noteToView, setNoteToView] = useState<NoteItem | null>(null);
+  const [noteReaderEditMode, setNoteReaderEditMode] = useState(false);
   const [isAddNoteBoardOpen, setIsAddNoteBoardOpen] = useState(false);
 
   // Cloud sync manager
@@ -91,7 +104,13 @@ export const App: React.FC = () => {
 
   // Current theme config
   const currentThemeId: ThemeId = state.theme || 'emerald';
-  const currentThemeConfig = THEMES[currentThemeId] || THEMES.emerald;
+  const baseThemeConfig = THEMES[currentThemeId] || THEMES.emerald;
+  const currentThemeConfig = useMemo(() => {
+    if (state.customThemeColor) {
+      return createCustomTheme(state.customThemeColor, baseThemeConfig);
+    }
+    return baseThemeConfig;
+  }, [state.customThemeColor, baseThemeConfig]);
 
   // Active page resolution
   const activePage = useMemo(() => {
@@ -197,21 +216,40 @@ export const App: React.FC = () => {
         ['--custom-text-transform' as string]: typography.textTransform,
         ['--custom-letter-spacing' as string]: typography.letterSpacing === 'tight' ? '-0.025em' : typography.letterSpacing === 'wide' ? '0.05em' : 'normal',
         ['--theme-accent' as string]: themeAccentColor,
+        ['--card-backdrop-blur' as string]: `${state.cardGlassBlur ?? 4}px`,
+        ['--card-bg-opacity' as string]: `${(state.cardGlassOpacity ?? 25) / 100}`,
       }}
     >
-      {/* Dynamic Ambient Silk Waves Background */}
-      <BackgroundWaves theme={currentThemeConfig} />
+      {/* Dynamic Ambient Silk Waves Background with optional Custom Wallpaper */}
+      <BackgroundWaves
+        theme={currentThemeConfig}
+        customBackgroundImage={state.customBackgroundImage}
+        backgroundBlur={state.backgroundBlur}
+        backgroundBrightness={state.backgroundBrightness}
+      />
 
-      {/* Top Header - Centered Liquid Glass Search Capsule with Tabs */}
+      {/* Top Header - Centered Liquid Glass Search Capsule with Tabs & Top-Right Customizer */}
       <Header
         activeTab={state.activeTab || 'bookmarks'}
         onSelectTab={setActiveTab}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenCustomizer={() => setIsCustomizerOpen(true)}
+        customThemeColor={state.customThemeColor}
+        customBackgroundImage={state.customBackgroundImage}
+        themeAccentColor={themeAccentColor}
+        isZenMode={isZenMode}
+        onToggleZenMode={() => setIsZenMode((prev) => !prev)}
       />
 
-      {/* Active Tab View */}
-      {(state.activeTab || 'bookmarks') === 'bookmarks' && (
+      {/* Main Canvas Container - Smoothly fades out in Zen Mode */}
+      <div 
+        className={`flex-1 flex flex-col transition-all duration-300 ${
+          isZenMode ? 'opacity-0 pointer-events-none select-none scale-[0.98]' : 'opacity-100 scale-100'
+        }`}
+      >
+        {/* Active Tab View */}
+        {(state.activeTab || 'bookmarks') === 'bookmarks' && (
         <>
           {/* Workspace Category Navigation (Pills matching reference design) */}
           <PageNavigation
@@ -293,13 +331,29 @@ export const App: React.FC = () => {
             setNoteToEdit(null);
             setIsAddNoteItemOpen(true);
           }}
+          onViewNote={(note) => {
+            setNoteToView(note);
+            setNoteReaderEditMode(false);
+          }}
           onEditNote={(note) => {
-            setNoteToEdit(note);
-            setNoteTargetBoardId(null);
-            setIsAddNoteItemOpen(true);
+            setNoteToView(note);
+            setNoteReaderEditMode(true);
           }}
           onDeleteNote={deleteNoteItem}
         />
+      )}
+      </div>
+
+      {/* Floating Zen Mode Indicator when active */}
+      {isZenMode && (
+        <button
+          type="button"
+          onClick={() => setIsZenMode(false)}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-2.5 rounded-2xl liquid-glass shadow-2xl border border-white/20 text-xs font-semibold text-white animate-fade-in hover:scale-105 cursor-pointer"
+        >
+          <Eye className="w-4 h-4 text-emerald-400" />
+          <span>Zen Wallpaper Mode · Click anywhere to restore cards</span>
+        </button>
       )}
 
       {/* Right-Hand Floating Setting Bar (Liquid Glass Dock) */}
@@ -363,6 +417,22 @@ export const App: React.FC = () => {
         currentState={state}
         onResetToDefault={resetToDefault}
         onRestoreBackup={restoreState}
+        customThemeColor={state.customThemeColor}
+        onSelectCustomThemeColor={setCustomThemeColor}
+        customBackgroundImage={state.customBackgroundImage}
+        onSelectCustomBackgroundImage={setCustomBackgroundImage}
+        backgroundBlur={state.backgroundBlur ?? 0}
+        onUpdateBackgroundBlur={setBackgroundBlur}
+        backgroundBrightness={state.backgroundBrightness ?? 100}
+        onUpdateBackgroundBrightness={setBackgroundBrightness}
+        cardGlassBlur={state.cardGlassBlur ?? 4}
+        onUpdateCardGlassBlur={setCardGlassBlur}
+        cardGlassOpacity={state.cardGlassOpacity ?? 25}
+        onUpdateCardGlassOpacity={setCardGlassOpacity}
+        onOpenBackgroundCustomizer={() => {
+          setIsSettingsOpen(false);
+          setIsCustomizerOpen(true);
+        }}
       />
 
       <AddBookmarkModal
@@ -425,6 +495,45 @@ export const App: React.FC = () => {
         title="Create Notes Card"
         onClose={() => setIsAddNoteBoardOpen(false)}
         onSave={(title, color) => createNoteBoard(title, color)}
+      />
+
+      <NoteReaderModal
+        isOpen={Boolean(noteToView)}
+        note={noteToView ? (state.noteItems?.[noteToView.id] || noteToView) : null}
+        initialEditMode={noteReaderEditMode}
+        onClose={() => {
+          setNoteToView(null);
+          setNoteReaderEditMode(false);
+        }}
+        onUpdate={updateNoteItem}
+        onDelete={(noteId) => {
+          deleteNoteItem(noteId);
+          setNoteToView(null);
+          setNoteReaderEditMode(false);
+        }}
+      />
+
+
+
+      {/* Background & Accent Color Customizer Modal */}
+      <BackgroundCustomizerModal
+        isOpen={isCustomizerOpen}
+        onClose={() => setIsCustomizerOpen(false)}
+        theme={currentThemeConfig}
+        currentThemeId={currentThemeId}
+        onSelectTheme={setTheme}
+        customThemeColor={state.customThemeColor}
+        onSelectCustomThemeColor={setCustomThemeColor}
+        customBackgroundImage={state.customBackgroundImage}
+        onSelectCustomBackgroundImage={setCustomBackgroundImage}
+        backgroundBlur={state.backgroundBlur ?? 0}
+        onUpdateBackgroundBlur={setBackgroundBlur}
+        backgroundBrightness={state.backgroundBrightness ?? 100}
+        onUpdateBackgroundBrightness={setBackgroundBrightness}
+        cardGlassBlur={state.cardGlassBlur ?? 4}
+        onUpdateCardGlassBlur={setCardGlassBlur}
+        cardGlassOpacity={state.cardGlassOpacity ?? 25}
+        onUpdateCardGlassOpacity={setCardGlassOpacity}
       />
     </div>
   );

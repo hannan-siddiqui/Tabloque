@@ -10,6 +10,7 @@ interface NoteCardColumnProps {
   onAddNote: (boardId: string) => void;
   onUpdateBoard: (boardId: string, updates: Partial<NoteBoard>) => void;
   onDeleteBoard: (boardId: string) => void;
+  onViewNote: (note: NoteItem) => void;
   onEditNote: (note: NoteItem) => void;
   onDeleteNote: (noteId: string) => void;
   onToast: (msg: string) => void;
@@ -22,6 +23,7 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
   onAddNote,
   onUpdateBoard,
   onDeleteBoard,
+  onViewNote,
   onEditNote,
   onDeleteNote,
   onToast,
@@ -173,12 +175,12 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
   return (
     <div
       style={style}
-      className="shrink-0 flex flex-col rounded-2xl liquid-glass-card px-5 pt-3.5 pb-4 group relative select-none transition-all duration-150"
+      className="shrink-0 flex flex-col rounded-2xl liquid-glass-card px-5 pt-3.5 pb-4 group relative transition-all duration-150"
     >
       {/* Card Header - Draggable anywhere on Canvas */}
       <div
         onPointerDown={handleFreePointerDown}
-        className="flex items-center justify-between pb-2 mb-1 border-b border-white/10 cursor-grab active:cursor-grabbing"
+        className="flex items-center justify-between pb-2 mb-1 border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-accent,#22c55e)] shadow-[0_0_8px_var(--theme-accent,#22c55e)]" />
@@ -296,6 +298,7 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
             <NoteItemRow
               key={note.id}
               note={note}
+              onView={onViewNote}
               onEdit={onEditNote}
               onDelete={onDeleteNote}
               onToast={onToast}

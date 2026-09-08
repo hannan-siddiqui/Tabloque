@@ -5,6 +5,7 @@ import { NoteItem } from '../../types';
 
 interface NoteItemRowProps {
   note: NoteItem;
+  onView: (note: NoteItem) => void;
   onEdit: (note: NoteItem) => void;
   onDelete: (noteId: string) => void;
   onToast: (msg: string) => void;
@@ -12,6 +13,7 @@ interface NoteItemRowProps {
 
 export const NoteItemRow: React.FC<NoteItemRowProps> = ({
   note,
+  onView,
   onEdit,
   onDelete,
   onToast,
@@ -113,6 +115,15 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({
     onDelete(note.id);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If the user selected/highlighted text with the mouse, don't open the reader
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      return;
+    }
+    onView(note);
+  };
+
   const formattedDate = new Date(note.updatedAt || note.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -120,85 +131,101 @@ export const NoteItemRow: React.FC<NoteItemRowProps> = ({
 
   return (
     <div
-      onClick={() => onEdit(note)}
-      className="group/note relative flex flex-col p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer select-none"
+      onClick={handleCardClick}
+      className="group/note relative flex flex-col p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer"
     >
-      {/* Top row: Title, Pin, Three Dots Menu */}
+      {/* Top row: Title, Pin, Quick Copy, Three Dots Menu */}
       <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-white/5">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {note.isPinned && <Pin className="w-3 h-3 text-[var(--theme-accent,#22c55e)] shrink-0" />}
-          <h4 className="text-xs font-bold text-white truncate group-hover/note:text-[var(--theme-accent,#22c55e)] transition-colors bookmark-item-title">
+          <h4 className="text-xs font-bold text-white truncate group-hover/note:text-[var(--theme-accent,#22c55e)] transition-colors select-text">
             {note.title}
           </h4>
         </div>
 
-        {/* Three dots button */}
-        <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+        {/* Action icons */}
+        <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Quick Copy Icon */}
           <button
-            ref={btnRef}
             type="button"
-            onClick={handleToggleMenu}
+            onClick={handleCopyContent}
             className={`p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer ${
-              menuOpen ? 'opacity-100 bg-white/10 text-white' : 'opacity-0 group-hover/note:opacity-100'
+              copied ? '!opacity-100 text-emerald-400' : 'opacity-0 group-hover/note:opacity-100'
             }`}
-            title="More options"
+            title="Copy note text"
           >
-            <MoreVertical className="w-3.5 h-3.5" />
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
 
-          {menuOpen && createPortal(
-            <div
-              ref={menuRef}
-              style={menuStyle}
-              className="w-44 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl text-xs animate-fade-in border border-white/20 space-y-0.5"
-              onClick={(e) => e.stopPropagation()}
+          {/* Three dots button */}
+          <div className="relative">
+            <button
+              ref={btnRef}
+              type="button"
+              onClick={handleToggleMenu}
+              className={`p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition-all cursor-pointer ${
+                menuOpen ? 'opacity-100 bg-white/10 text-white' : 'opacity-0 group-hover/note:opacity-100'
+              }`}
+              title="More options (Edit, Copy, Delete)"
             >
-              <button
-                type="button"
-                onClick={handleEditClick}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-white hover:bg-white/15 transition-colors cursor-pointer font-medium"
-              >
-                <Edit2 className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
-                <span>Edit Note</span>
-              </button>
+              <MoreVertical className="w-3.5 h-3.5" />
+            </button>
 
-              <button
-                type="button"
-                onClick={handleCopyContent}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            {menuOpen && createPortal(
+              <div
+                ref={menuRef}
+                style={menuStyle}
+                className="w-44 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl text-xs animate-fade-in border border-white/20 space-y-0.5"
+                onClick={(e) => e.stopPropagation()}
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                <span>{copied ? 'Copied' : 'Copy Content'}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={handleEditClick}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-white hover:bg-white/15 transition-colors cursor-pointer font-medium"
+                >
+                  <Edit2 className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                  <span>Edit Note</span>
+                </button>
 
-              <div className="h-px bg-white/10 my-1" />
+                <button
+                  type="button"
+                  onClick={handleCopyContent}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                  <span>{copied ? 'Copied' : 'Copy Content'}</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={handleDeleteClick}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Note</span>
-              </button>
-            </div>,
-            document.body
-          )}
+                <div className="h-px bg-white/10 my-1" />
+
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Note</span>
+                </button>
+              </div>,
+              document.body
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Content Preview */}
-      <p className="text-[11px] text-slate-300/85 mt-2 line-clamp-3 leading-relaxed whitespace-pre-line font-sans">
+      {/* Content Preview - Selectable text */}
+      <p className="text-[11px] text-slate-300/85 mt-2 line-clamp-4 leading-relaxed whitespace-pre-line font-sans select-text cursor-text">
         {note.content}
       </p>
 
       {/* Footer Timestamp */}
       <div className="flex items-center justify-between pt-2 mt-1 text-[10px] text-slate-500 font-mono">
         <span>{formattedDate}</span>
-        <span className="text-[10px] text-slate-600 opacity-0 group-hover/note:opacity-100 transition-opacity">
-          Click to edit
+        <span className="text-[10px] text-slate-400 opacity-0 group-hover/note:opacity-100 transition-opacity">
+          Click to view
         </span>
       </div>
     </div>
   );
 };
+

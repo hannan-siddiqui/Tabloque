@@ -72,6 +72,24 @@ export function useTabloqueStore() {
         savedState.noteItems = INITIAL_STATE.noteItems;
         savedState.noteBoardOrder = INITIAL_STATE.noteBoardOrder;
       }
+      if (savedState.customThemeColor === undefined) {
+        savedState.customThemeColor = null;
+      }
+      if (savedState.customBackgroundImage === undefined) {
+        savedState.customBackgroundImage = null;
+      }
+      if (savedState.backgroundBlur === undefined) {
+        savedState.backgroundBlur = 0;
+      }
+      if (savedState.backgroundBrightness === undefined) {
+        savedState.backgroundBrightness = 100;
+      }
+      if (savedState.cardGlassBlur === undefined) {
+        savedState.cardGlassBlur = savedState.customBackgroundImage ? 4 : 16;
+      }
+      if (savedState.cardGlassOpacity === undefined) {
+        savedState.cardGlassOpacity = 25;
+      }
       setState(savedState);
       setIsLoaded(true);
     });
@@ -526,7 +544,31 @@ export function useTabloqueStore() {
   );
 
   const setTheme = useCallback((themeId: ThemeId) => {
-    setState((prev) => ({ ...prev, theme: themeId }));
+    setState((prev) => ({ ...prev, theme: themeId, customThemeColor: null }));
+  }, []);
+
+  const setCustomThemeColor = useCallback((color: string | null) => {
+    setState((prev) => ({ ...prev, customThemeColor: color }));
+  }, []);
+
+  const setCustomBackgroundImage = useCallback((imageUrl: string | null) => {
+    setState((prev) => ({ ...prev, customBackgroundImage: imageUrl }));
+  }, []);
+
+  const setBackgroundBlur = useCallback((blur: number) => {
+    setState((prev) => ({ ...prev, backgroundBlur: blur }));
+  }, []);
+
+  const setBackgroundBrightness = useCallback((brightness: number) => {
+    setState((prev) => ({ ...prev, backgroundBrightness: brightness }));
+  }, []);
+
+  const setCardGlassBlur = useCallback((blur: number) => {
+    setState((prev) => ({ ...prev, cardGlassBlur: blur }));
+  }, []);
+
+  const setCardGlassOpacity = useCallback((opacity: number) => {
+    setState((prev) => ({ ...prev, cardGlassOpacity: opacity }));
   }, []);
 
   // --- Watch Widget Management ---
@@ -953,6 +995,12 @@ export function useTabloqueStore() {
     reorderBookmarksInBoard,
     togglePrivacyMode,
     setTheme,
+    setCustomThemeColor,
+    setCustomBackgroundImage,
+    setBackgroundBlur,
+    setBackgroundBrightness,
+    setCardGlassBlur,
+    setCardGlassOpacity,
     updateTypography,
     updateBorderConfig,
     addWatch,

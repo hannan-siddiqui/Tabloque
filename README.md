@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/icons/TabLoque.png" alt="TabLoque Logo" width="96" />
+</p>
+
 # TabLoque 🔖
 
 > **Visual, Drag-and-Drop Bookmark Workspace replacing your Chrome New Tab page.**  

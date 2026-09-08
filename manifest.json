@@ -5,6 +5,7 @@
   "description": "Visual, drag-and-drop bookmark manager replacing your Chrome New Tab page with customizable boards and cloud sync.",
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab",
     "tabs",
     "favicon"

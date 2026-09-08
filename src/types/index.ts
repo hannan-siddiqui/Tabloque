@@ -185,6 +185,12 @@ export interface TabloqueState {
   activePageId: string;
   privacyMode: boolean;
   theme?: ThemeId;
+  customThemeColor?: string | null;
+  customBackgroundImage?: string | null;
+  backgroundBlur?: number;
+  backgroundBrightness?: number;
+  cardGlassBlur?: number;
+  cardGlassOpacity?: number;
   typography?: TypographyConfig;
   borderConfig?: BorderConfig;
   watches?: Record<string, WatchWidget>;

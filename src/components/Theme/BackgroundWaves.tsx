@@ -3,101 +3,147 @@ import { ThemeConfig } from '../../theme/themes';
 
 interface BackgroundWavesProps {
   theme: ThemeConfig;
+  customBackgroundImage?: string | null;
+  backgroundBlur?: number;
+  backgroundBrightness?: number;
 }
 
-export const BackgroundWaves: React.FC<BackgroundWavesProps> = ({ theme }) => {
+export const BackgroundWaves: React.FC<BackgroundWavesProps> = ({
+  theme,
+  customBackgroundImage,
+  backgroundBlur = 0,
+  backgroundBrightness = 100,
+}) => {
+  // Compute universal GPU-accelerated filters that work on both custom wallpaper and theme waves
+  const filterParts: string[] = [];
+  if (backgroundBlur > 0) {
+    filterParts.push(`blur(${backgroundBlur}px)`);
+  }
+  if (backgroundBrightness !== 100) {
+    filterParts.push(`brightness(${backgroundBrightness}%)`);
+  }
+  const filterStyle = filterParts.length > 0 ? filterParts.join(' ') : undefined;
+
   return (
-    <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
-      {/* Base theme gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-b ${theme.bgGradient}`} />
-
-      {/* Ambient radial glows */}
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none">
+      {/* Background Visual Layer (Custom Wallpaper or Theme Waves) with universal blur & brightness */}
       <div
-        className="absolute -top-[15%] -left-[10%] w-[60vw] h-[60vw] rounded-full blur-[140px] opacity-35"
-        style={{ backgroundColor: theme.accentColor }}
-      />
-      <div
-        className="absolute top-[35%] -right-[15%] w-[65vw] h-[65vw] rounded-full blur-[160px] opacity-30"
-        style={{ backgroundColor: theme.accentColor }}
-      />
-      <div
-        className="absolute -bottom-[20%] left-[20%] w-[55vw] h-[55vw] rounded-full blur-[140px] opacity-25"
-        style={{ backgroundColor: theme.accentColor }}
-      />
-
-      {/* Elegant flowing wave curves (silk ribbons) matching reference image */}
-      <svg
-        className="absolute inset-0 w-full h-full object-cover opacity-85"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 1440 900"
-        preserveAspectRatio="none"
+        className="absolute inset-0 transition-all duration-300 pointer-events-none"
+        style={{
+          filter: filterStyle,
+          transform: backgroundBlur > 0 ? 'scale(1.05)' : 'none',
+        }}
       >
-        <defs>
-          <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
-            <stop offset="50%" stopColor={theme.accentColor} stopOpacity="0.32" />
-            <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
-          </linearGradient>
-          <linearGradient id="waveGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
-            <stop offset="40%" stopColor={theme.accentColor} stopOpacity="0.4" />
-            <stop offset="80%" stopColor={theme.accentColor} stopOpacity="0.1" />
-            <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
-          </linearGradient>
-          <linearGradient id="waveGrad3" x1="0%" y1="50%" x2="100%" y2="50%">
-            <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
-            <stop offset="30%" stopColor={theme.accentColor} stopOpacity="0.35" />
-            <stop offset="70%" stopColor={theme.accentColor} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
+        {/* 1. Custom Background Image Mode */}
+        {customBackgroundImage ? (
+          <>
+            {/* Deep dark canvas base */}
+            <div className="absolute inset-0 bg-[#05080c]" />
 
-        {/* Layered bezier ribbon waves */}
-        <path
-          d="M-100,500 C300,300 600,700 1100,350 C1300,200 1500,450 1600,300"
-          fill="none"
-          stroke="url(#waveGrad1)"
-          strokeWidth="120"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-80,480 C320,280 620,680 1120,330 C1320,180 1520,430 1620,280"
-          fill="none"
-          stroke="url(#waveGrad2)"
-          strokeWidth="60"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-60,460 C340,260 640,660 1140,310 C1340,160 1540,410 1640,260"
-          fill="none"
-          stroke="url(#waveGrad3)"
-          strokeWidth="30"
-          strokeLinecap="round"
-        />
+            {/* User's custom wallpaper - clean, sharp, pure color fidelity */}
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-all duration-300 pointer-events-none"
+              style={{
+                backgroundImage: `url("${customBackgroundImage.replace(/"/g, '\\"')}")`,
+              }}
+            />
+          </>
+        ) : (
+          /* 2. Default Dynamic Ambient Waves & Theme Glows Mode */
+          <>
+            {/* Base theme gradient */}
+            <div className={`absolute inset-0 bg-gradient-to-b ${theme.bgGradient}`} />
 
-        <path
-          d="M-50,700 C400,550 800,850 1200,600 C1400,500 1550,650 1650,550"
-          fill="none"
-          stroke="url(#waveGrad1)"
-          strokeWidth="80"
-          strokeLinecap="round"
-        />
-        <path
-          d="M-30,680 C420,530 820,830 1220,580 C1420,480 1570,630 1670,530"
-          fill="none"
-          stroke="url(#waveGrad2)"
-          strokeWidth="40"
-          strokeLinecap="round"
-        />
+            {/* Ambient radial glows */}
+            <div
+              className="absolute -top-[15%] -left-[10%] w-[60vw] h-[60vw] rounded-full blur-[140px] opacity-35"
+              style={{ backgroundColor: theme.accentColor }}
+            />
+            <div
+              className="absolute top-[35%] -right-[15%] w-[65vw] h-[65vw] rounded-full blur-[160px] opacity-30"
+              style={{ backgroundColor: theme.accentColor }}
+            />
+            <div
+              className="absolute -bottom-[20%] left-[20%] w-[55vw] h-[55vw] rounded-full blur-[140px] opacity-25"
+              style={{ backgroundColor: theme.accentColor }}
+            />
 
-        <path
-          d="M-100,200 C350,50 750,350 1150,150 C1350,50 1500,180 1600,100"
-          fill="none"
-          stroke="url(#waveGrad3)"
-          strokeWidth="50"
-          strokeLinecap="round"
-        />
-      </svg>
+            {/* Elegant flowing wave curves (silk ribbons) */}
+            <svg
+              className="absolute inset-0 w-full h-full object-cover opacity-85"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 1440 900"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                  <stop offset="50%" stopColor={theme.accentColor} stopOpacity="0.32" />
+                  <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                </linearGradient>
+                <linearGradient id="waveGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                  <stop offset="40%" stopColor={theme.accentColor} stopOpacity="0.4" />
+                  <stop offset="80%" stopColor={theme.accentColor} stopOpacity="0.1" />
+                  <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                </linearGradient>
+                <linearGradient id="waveGrad3" x1="0%" y1="50%" x2="100%" y2="50%">
+                  <stop offset="0%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                  <stop offset="30%" stopColor={theme.accentColor} stopOpacity="0.35" />
+                  <stop offset="70%" stopColor={theme.accentColor} stopOpacity="0.2" />
+                  <stop offset="100%" stopColor={theme.accentColor} stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Layered bezier ribbon waves */}
+              <path
+                d="M-100,500 C300,300 600,700 1100,350 C1300,200 1500,450 1600,300"
+                fill="none"
+                stroke="url(#waveGrad1)"
+                strokeWidth="120"
+                strokeLinecap="round"
+              />
+              <path
+                d="M-80,480 C320,280 620,680 1120,330 C1320,180 1520,430 1620,280"
+                fill="none"
+                stroke="url(#waveGrad2)"
+                strokeWidth="60"
+                strokeLinecap="round"
+              />
+              <path
+                d="M-60,460 C340,260 640,660 1140,310 C1340,160 1540,410 1640,260"
+                fill="none"
+                stroke="url(#waveGrad3)"
+                strokeWidth="30"
+                strokeLinecap="round"
+              />
+
+              <path
+                d="M-50,700 C400,550 800,850 1200,600 C1400,500 1550,650 1650,550"
+                fill="none"
+                stroke="url(#waveGrad1)"
+                strokeWidth="80"
+                strokeLinecap="round"
+              />
+              <path
+                d="M-30,680 C420,530 820,830 1220,580 C1420,480 1570,630 1670,530"
+                fill="none"
+                stroke="url(#waveGrad2)"
+                strokeWidth="40"
+                strokeLinecap="round"
+              />
+
+              <path
+                d="M-100,200 C350,50 750,350 1150,150 C1350,50 1500,180 1600,100"
+                fill="none"
+                stroke="url(#waveGrad3)"
+                strokeWidth="50"
+                strokeLinecap="round"
+              />
+            </svg>
+          </>
+        )}
+      </div>
     </div>
   );
 };

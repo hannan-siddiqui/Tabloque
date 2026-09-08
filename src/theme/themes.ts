@@ -281,3 +281,38 @@ export const THEMES: Record<ThemeId, ThemeConfig> = {
     previewColor: 'from-rose-600 via-red-900 to-black',
   },
 };
+
+export function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  let clean = hex.replace('#', '').trim();
+  if (clean.length === 3) {
+    clean = clean.split('').map((c) => c + c).join('');
+  }
+  const num = parseInt(clean, 16);
+  if (isNaN(num)) return { r: 34, g: 197, b: 94 };
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  };
+}
+
+export function createCustomTheme(customColor: string, baseTheme: ThemeConfig = THEMES.emerald): ThemeConfig {
+  const { r, g, b } = hexToRgb(customColor);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const pillTextColor = luminance > 0.6 ? 'text-black' : 'text-white';
+
+  return {
+    ...baseTheme,
+    id: 'custom' as any,
+    name: 'Custom Color',
+    description: `Custom Accent (${customColor})`,
+    accentColor: customColor,
+    activePill: `${pillTextColor} font-semibold shadow-[0_4px_20px_rgba(${r},${g},${b},0.45)] border border-white/60 backdrop-blur-xl`,
+    cardBg: `bg-[#090b10]/60 backdrop-blur-2xl`,
+    cardBorder: `border-white/10 hover:border-white/25`,
+    bgGradient: `from-[rgb(${Math.round(r * 0.08)},${Math.round(g * 0.08)},${Math.round(b * 0.08)})] via-[#080a0e] to-[#030406]`,
+    svgWaveColor: `rgba(${r}, ${g}, ${b}, 0.18)`,
+    previewColor: 'from-slate-700 to-slate-900',
+  };
+}
+

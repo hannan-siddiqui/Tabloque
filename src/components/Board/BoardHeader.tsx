@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal, Plus, Trash2, Palette, Edit3, GripHorizontal, Maximize2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Trash2, Palette, Edit3, GripHorizontal, Maximize2, Check } from 'lucide-react';
 import { Board } from '../../types';
+import { BOARD_COLORS, COLOR_OPTIONS, getBoardColorConfig, BoardColorConfig } from '../../theme/boardColors';
 
 interface BoardHeaderProps {
   board: Board;
   count: number;
+  colorConfig?: BoardColorConfig;
   onAddBookmark: (boardId: string) => void;
   onUpdateBoard: (boardId: string, updates: Partial<Board>) => void;
   onDeleteBoard: (boardId: string) => void;
@@ -12,20 +14,10 @@ interface BoardHeaderProps {
   onFreePointerDown?: (e: React.PointerEvent) => void;
 }
 
-const COLOR_MAP: Record<string, { bg: string; dot: string; border: string }> = {
-  indigo: { bg: 'bg-indigo-500/10', dot: 'bg-indigo-500', border: 'border-indigo-500/30' },
-  emerald: { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', border: 'border-emerald-500/30' },
-  purple: { bg: 'bg-purple-500/10', dot: 'bg-purple-500', border: 'border-purple-500/30' },
-  amber: { bg: 'bg-amber-500/10', dot: 'bg-amber-500', border: 'border-amber-500/30' },
-  rose: { bg: 'bg-rose-500/10', dot: 'bg-rose-500', border: 'border-rose-500/30' },
-  sky: { bg: 'bg-sky-500/10', dot: 'bg-sky-500', border: 'border-sky-500/30' },
-};
-
-const COLOR_OPTIONS = ['indigo', 'emerald', 'purple', 'amber', 'rose', 'sky'];
-
 export const BoardHeader: React.FC<BoardHeaderProps> = ({
   board,
   count,
+  colorConfig: propColorConfig,
   onAddBookmark,
   onUpdateBoard,
   onDeleteBoard,
@@ -67,7 +59,14 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
     };
   }, [menuOpen]);
 
-  const colorConfig = COLOR_MAP[board.color || 'indigo'] || COLOR_MAP.indigo;
+  const colorConfig = propColorConfig || getBoardColorConfig(board.color);
+
+  useEffect(() => {
+    setTitle(board.title);
+  }, [board.title]);
+
+  const isDefaultTheme = !board.color || board.color === 'default';
+  const isCustomHex = Boolean(board.color && board.color.startsWith('#'));
 
   const handleSaveTitle = () => {
     if (title.trim() && title.trim() !== board.title) {
@@ -87,7 +86,12 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
   return (
     <div
       onPointerDown={onFreePointerDown}
-      className={`flex items-center justify-between gap-2 pb-2 mb-1 border-b border-white/10 ${
+      style={{
+        borderBottomColor: isDefaultTheme ? undefined : `rgba(${colorConfig.rgb}, 0.35)`,
+      }}
+      className={`flex items-center justify-between gap-2 pb-2 mb-1 border-b ${
+        isDefaultTheme ? 'border-white/10' : ''
+      } ${
         onFreePointerDown ? 'cursor-grab active:cursor-grabbing select-none' : ''
       }`}
     >
@@ -101,6 +105,18 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
         >
           <GripHorizontal className="w-3.5 h-3.5" />
         </button>
+
+        {/* Board Color Accent Indicator */}
+        <span
+          className={`w-2 h-2 rounded-full shrink-0 transition-all ${
+            colorConfig.dot || ''
+          }`}
+          style={{
+            backgroundColor: colorConfig.isCustom ? colorConfig.hex : undefined,
+            boxShadow: `0 0 8px ${colorConfig.hex}`,
+          }}
+          title={`Card Color: ${colorConfig.label}`}
+        />
 
         {isEditing ? (
           <input
@@ -153,7 +169,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
           {menuOpen && (
             <div
               ref={menuRef}
-              className="absolute right-0 top-full mt-1.5 w-48 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-[70] text-xs animate-fade-in border border-white/20"
+              className="absolute right-0 top-full mt-1.5 w-52 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-[70] text-xs animate-fade-in border border-white/20"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -164,7 +180,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                 }}
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-white hover:bg-white/15 transition-colors cursor-pointer font-medium"
               >
-                <Edit3 className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                <Edit3 className="w-3.5 h-3.5" style={{ color: colorConfig.hex }} />
                 <span>Rename / Edit board</span>
               </button>
 
@@ -177,26 +193,86 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
                   }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 >
-                  <Palette className="w-3.5 h-3.5 text-slate-400" />
+                  <Palette className="w-3.5 h-3.5" style={{ color: colorConfig.hex }} />
                   <span>Change color</span>
                 </button>
 
                 {colorPickerOpen && (
-                  <div className="p-2 border-t border-white/10 flex items-center gap-2 justify-center">
-                    {COLOR_OPTIONS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => {
-                          onUpdateBoard(board.id, { color: c });
-                          setColorPickerOpen(false);
-                          setMenuOpen(false);
-                        }}
-                        className={`w-5 h-5 rounded-full ${COLOR_MAP[c].dot} hover:scale-110 transition-transform ${
-                          board.color === c ? 'ring-2 ring-white shadow-[0_0_10px_rgba(255,255,255,0.5)]' : ''
-                        }`}
-                      />
-                    ))}
+                  <div className="p-2 border-t border-white/10 space-y-2">
+                    {/* Theme Default Option */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onUpdateBoard(board.id, { color: undefined });
+                        setColorPickerOpen(false);
+                        setMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl transition-all cursor-pointer text-[11px] ${
+                        isDefaultTheme
+                          ? 'bg-white/15 text-white font-semibold border border-white/30'
+                          : 'text-slate-300 hover:text-white hover:bg-white/10'
+                      }`}
+                      title="Reset to default theme color with no custom tint"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-[var(--theme-accent,#22c55e)] shadow-[0_0_6px_var(--theme-accent,#22c55e)]" />
+                        <span>Theme Default</span>
+                      </div>
+                      {isDefaultTheme && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                    </button>
+
+                    {/* Predefined Color Presets */}
+                    <div>
+                      <p className="text-[10px] text-slate-400 font-semibold mb-1 px-0.5">Presets:</p>
+                      <div className="flex items-center gap-1.5 justify-center py-0.5">
+                        {COLOR_OPTIONS.map((c) => {
+                          const opt = BOARD_COLORS[c];
+                          const isSelected = board.color === c;
+                          return (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => {
+                                onUpdateBoard(board.id, { color: c });
+                                setColorPickerOpen(false);
+                                setMenuOpen(false);
+                              }}
+                              className={`w-5 h-5 rounded-full ${opt.dot} hover:scale-125 transition-all cursor-pointer ${
+                                isSelected ? 'ring-2 ring-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.7)]' : 'opacity-70 hover:opacity-100'
+                              }`}
+                              title={opt.label}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Choose Any Custom Color */}
+                    <div className="pt-1.5 border-t border-white/10 flex items-center justify-between">
+                      <label className="text-[11px] text-slate-300 font-medium flex items-center gap-1.5 cursor-pointer">
+                        <div
+                          className="w-4 h-4 rounded-full border border-white/40 shadow-sm shrink-0 overflow-hidden relative cursor-pointer"
+                          style={{ backgroundColor: isCustomHex ? board.color : '#ec4899' }}
+                        >
+                          <input
+                            type="color"
+                            value={isCustomHex ? board.color : '#ec4899'}
+                            onChange={(e) => {
+                              onUpdateBoard(board.id, { color: e.target.value });
+                            }}
+                            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                            title="Pick any custom color"
+                          />
+                        </div>
+                        <span>Custom color</span>
+                      </label>
+
+                      {isCustomHex && (
+                        <span className="text-[10px] font-mono text-slate-300 uppercase bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
+                          {board.color}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

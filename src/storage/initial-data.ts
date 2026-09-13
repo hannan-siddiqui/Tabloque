@@ -245,6 +245,7 @@ export const INITIAL_STATE: TabloqueState = {
   firebaseConfig: null,
   lastSyncedAt: null,
   customThemeColor: null,
+  backgroundPattern: 'waves',
   customBackgroundImage: null,
   backgroundBlur: 0,
   backgroundBrightness: 100,

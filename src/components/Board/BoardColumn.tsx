@@ -7,6 +7,7 @@ import { BookmarkPlus } from 'lucide-react';
 import { Board, Bookmark } from '../../types';
 import { BoardHeader } from './BoardHeader';
 import { BookmarkCard } from '../Bookmark/BookmarkCard';
+import { getBoardColorConfig } from '../../theme/boardColors';
 
 interface BoardColumnProps {
   board: Board;
@@ -165,6 +166,8 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   const currentBoardWidth = currentDimensions.width || board.width || 320;
   const isMultiColumn = currentBoardWidth >= 440;
   const bookmarkIds = bookmarks.map((b) => b.id);
+  const colorConfig = getBoardColorConfig(board.color);
+  const isTinted = !colorConfig.isDefault;
 
   const style: React.CSSProperties = isFreeLayout
     ? {
@@ -175,8 +178,15 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         width: `${currentBoardWidth}px`,
         height: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : undefined),
         maxHeight: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : 'calc(100vh - 150px)'),
-        boxShadow: isFreeDragging ? '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(34, 197, 94, 0.2)' : undefined,
+        boxShadow: isFreeDragging ? `0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px ${isTinted ? `rgba(${colorConfig.rgb}, 0.35)` : 'rgba(34, 197, 94, 0.2)'}` : undefined,
         transition: (isResizing || isFreeDragging) ? 'none' : 'box-shadow 0.15s',
+        ...(isTinted
+          ? {
+              ['--board-tint-rgb' as string]: colorConfig.rgb,
+              ['--board-tint-top-rgb' as string]: colorConfig.topRgb,
+              ['--board-accent-hex' as string]: colorConfig.hex,
+            }
+          : {}),
       }
     : {
         transform: CSS.Translate.toString(transform),
@@ -185,19 +195,28 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         width: `${currentBoardWidth}px`,
         height: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : undefined),
         maxHeight: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : 'calc(100vh - 150px)'),
+        ...(isTinted
+          ? {
+              ['--board-tint-rgb' as string]: colorConfig.rgb,
+              ['--board-tint-top-rgb' as string]: colorConfig.topRgb,
+              ['--board-accent-hex' as string]: colorConfig.hex,
+            }
+          : {}),
       };
 
   return (
     <div
       ref={setSortableRef}
       style={style}
-      className={`shrink-0 flex flex-col rounded-2xl liquid-glass-card px-5 pt-3.5 pb-4 group relative ${
-        isOverlay ? 'shadow-[0_0_40px_rgba(34,197,94,0.4)] border-emerald-400 rotate-1 scale-[1.02] z-50' : ''
+      data-board-color={colorConfig.id}
+      className={`shrink-0 flex flex-col rounded-2xl liquid-glass-card ${isTinted ? 'board-tinted' : ''} px-5 pt-3.5 pb-4 group relative ${
+        isOverlay ? 'shadow-[0_0_40px_rgba(var(--board-tint-rgb,34,197,94),0.55)] border-t-2 border-[var(--board-accent-hex,#22c55e)] rotate-1 scale-[1.02] z-50' : ''
       }`}
     >
       {/* Board Header - Draggable anywhere in Free Canvas mode */}
       <BoardHeader
         board={board}
+        colorConfig={colorConfig}
         count={bookmarks.length}
         onAddBookmark={onAddBookmark}
         onUpdateBoard={onUpdateBoard}
@@ -234,7 +253,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
 
         {bookmarks.length === 0 && (
           <div className="flex flex-col items-center justify-center h-32 rounded-xl border border-dashed border-white/10 text-slate-400 text-xs text-center p-4">
-            <BookmarkPlus className="w-6 h-6 mb-1.5 opacity-40 text-emerald-400" />
+            <BookmarkPlus className="w-6 h-6 mb-1.5 opacity-60" style={{ color: colorConfig.hex }} />
             <p className="font-medium">No bookmarks yet</p>
             <p className="text-[11px] text-slate-500 mt-0.5">Drop links here or click +</p>
           </div>

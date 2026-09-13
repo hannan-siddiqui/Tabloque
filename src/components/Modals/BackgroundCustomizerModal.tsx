@@ -12,8 +12,11 @@ import {
   Sparkles,
   Sun,
   Eye,
+  Grid,
+  Ban,
 } from 'lucide-react';
 import { ThemeConfig, THEMES, ThemeId } from '../../theme/themes';
+import { BackgroundPatternId, BACKGROUND_PATTERNS } from '../../theme/patterns';
 
 interface BackgroundCustomizerModalProps {
   isOpen: boolean;
@@ -23,6 +26,8 @@ interface BackgroundCustomizerModalProps {
   onSelectTheme?: (themeId: ThemeId) => void;
   customThemeColor?: string | null;
   onSelectCustomThemeColor: (color: string | null) => void;
+  backgroundPattern?: BackgroundPatternId;
+  onSelectBackgroundPattern?: (pattern: BackgroundPatternId) => void;
   customBackgroundImage?: string | null;
   onSelectCustomBackgroundImage: (image: string | null) => void;
   backgroundBlur?: number;
@@ -98,6 +103,8 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
   onSelectTheme,
   customThemeColor,
   onSelectCustomThemeColor,
+  backgroundPattern = 'waves',
+  onSelectBackgroundPattern,
   customBackgroundImage,
   onSelectCustomBackgroundImage,
   backgroundBlur = 0,
@@ -110,7 +117,7 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
   onUpdateCardGlassOpacity,
   onToast,
 }) => {
-  const [activeTab, setActiveTab] = useState<'wallpaper' | 'theme' | 'color'>('wallpaper');
+  const [activeTab, setActiveTab] = useState<'wallpaper' | 'theme' | 'color' | 'patterns'>('theme');
   const [urlInput, setUrlInput] = useState('');
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -226,7 +233,219 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
 
   const handleRemoveWallpaper = () => {
     onSelectCustomBackgroundImage(null);
-    onToast?.('Wallpaper removed; restored silk waves.');
+    onToast?.('Wallpaper removed; restored pattern background.');
+  };
+
+  const handleSelectPattern = (patId: BackgroundPatternId) => {
+    if (onSelectBackgroundPattern) {
+      onSelectBackgroundPattern(patId);
+    }
+    if (customBackgroundImage) {
+      onSelectCustomBackgroundImage(null);
+    }
+    const patObj = BACKGROUND_PATTERNS.find((p) => p.id === patId);
+    if (patId === 'none') {
+      onToast?.('Pure Color active: All patterns removed!');
+    } else {
+      onToast?.(`Applied ${patObj?.name || patId} pattern in your chosen color!`);
+    }
+  };
+
+  const renderPatternPreview = (id: BackgroundPatternId, color: string) => {
+    if (id === 'none') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-gradient-to-br from-[#0c1017] via-[#080c10] to-[#040608] flex items-center justify-center border border-white/10 relative overflow-hidden">
+          <div
+            className="w-10 h-10 rounded-full blur-md opacity-35"
+            style={{ backgroundColor: color }}
+          />
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-300 relative z-10">
+            <Ban className="w-3 h-3 text-rose-400" />
+            <span>Pure Color</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (id === 'waves') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden flex items-center justify-center">
+          <svg className="w-full h-full object-cover" viewBox="0 0 100 50" preserveAspectRatio="none">
+            <path d="M-10,35 C20,15 45,45 75,20 C85,12 95,25 110,15" fill="none" stroke={color} strokeWidth="6" strokeOpacity="0.4" strokeLinecap="round" />
+            <path d="M-10,25 C25,40 55,10 85,35 C95,42 105,30 110,25" fill="none" stroke={color} strokeWidth="3" strokeOpacity="0.75" strokeLinecap="round" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'grid') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-grid-${color.replace('#','')}`} width="12" height="12" patternUnits="userSpaceOnUse">
+                <path d="M 12 0 L 0 0 0 12" fill="none" stroke={color} strokeWidth="1" strokeOpacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-grid-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'dots') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-dots-${color.replace('#','')}`} width="10" height="10" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.3" fill={color} fillOpacity="0.8" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-dots-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'hexagons') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-hex-${color.replace('#','')}`} width="20" height="34" patternUnits="userSpaceOnUse">
+                <path d="M10 0 L20 6 L20 17 L10 23 L0 17 L0 6 Z M10 23 L20 29 L20 40 L10 46 L0 40 L0 29 Z" fill="none" stroke={color} strokeWidth="1" strokeOpacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-hex-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'mesh') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-mesh-${color.replace('#','')}`} width="16" height="16" patternUnits="userSpaceOnUse">
+                <path d="M0 8 L8 0 L16 8 L8 16 Z" fill="none" stroke={color} strokeWidth="1" strokeOpacity="0.55" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-mesh-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'circuit') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-circuit-${color.replace('#','')}`} width="30" height="30" patternUnits="userSpaceOnUse">
+                <path d="M5 5 L15 5 L15 15 L25 15 M5 25 L15 25 L25 25" fill="none" stroke={color} strokeWidth="1.2" strokeOpacity="0.6" />
+                <circle cx="5" cy="5" r="1.8" fill={color} fillOpacity="0.85" />
+                <circle cx="25" cy="15" r="1.8" fill={color} fillOpacity="0.85" />
+                <circle cx="25" cy="25" r="1.8" fill={color} fillOpacity="0.85" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-circuit-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    if (id === 'stripes') {
+      return (
+        <div className="w-full h-11 rounded-xl bg-[#060a10] border border-white/10 relative overflow-hidden">
+          <svg className="w-full h-full">
+            <defs>
+              <pattern id={`prev-stripes-${color.replace('#','')}`} width="12" height="12" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                <line x1="0" y1="0" x2="0" y2="12" stroke={color} strokeWidth="1.5" strokeOpacity="0.6" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill={`url(#prev-stripes-${color.replace('#','')})`} />
+          </svg>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderPatternsSection = (title = 'Background Patterns & Styles') => {
+    const currentPattern = backgroundPattern || 'waves';
+    const effectiveColor = pickerColor || theme.accentColor || '#22c55e';
+
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <Grid className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+              <span>{title}</span>
+            </h3>
+            <p className="text-[11px] text-slate-400">
+              Patterns render dynamically in your selected color. Select "Pure Color" for clean colors without patterns.
+            </p>
+          </div>
+          {currentPattern !== 'none' ? (
+            <button
+              type="button"
+              onClick={() => handleSelectPattern('none')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-[11px] font-semibold transition-colors cursor-pointer shrink-0"
+              title="Remove pattern: Keep only the clean background color"
+            >
+              <Ban className="w-3.5 h-3.5 text-rose-400" />
+              <span>Remove Pattern (Color Only)</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-bold text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 shrink-0">
+              <Check className="w-3 h-3 stroke-[3]" />
+              <span>Pure Color Mode (No Pattern)</span>
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {BACKGROUND_PATTERNS.map((pat) => {
+            const isSelected = currentPattern === pat.id && !customBackgroundImage;
+            return (
+              <button
+                key={pat.id}
+                type="button"
+                onClick={() => handleSelectPattern(pat.id)}
+                className={`p-2.5 rounded-2xl border text-left transition-all relative overflow-hidden group cursor-pointer flex flex-col justify-between gap-2 ${
+                  isSelected
+                    ? 'border-[var(--theme-accent,#22c55e)] bg-[var(--theme-accent,#22c55e)]/15 shadow-[0_0_18px_rgba(34,197,94,0.25)] ring-1 ring-[var(--theme-accent,#22c55e)]/50'
+                    : 'border-white/10 liquid-glass hover:border-white/25 hover:bg-white/[0.06]'
+                }`}
+              >
+                {/* Pattern Preview Box */}
+                {renderPatternPreview(pat.id, effectiveColor)}
+
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-xs font-bold text-white group-hover:text-[var(--theme-accent,#22c55e)] transition-colors truncate">
+                      {pat.name}
+                    </span>
+                    {isSelected && (
+                      <span className="w-4 h-4 rounded-full bg-[var(--theme-accent,#22c55e)] text-black flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
+                    {pat.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   const handleResetAdjustments = () => {
@@ -362,7 +581,7 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
       <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl liquid-glass-modal shadow-2xl border border-white/20 z-10 text-slate-100 overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl liquid-glass-modal shadow-2xl border border-white/20 z-10 text-slate-100 overflow-hidden">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-3">
@@ -389,53 +608,69 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
           </button>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 px-6 pt-3 pb-2 border-b border-white/10 shrink-0 bg-black/10 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('wallpaper')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
-              activeTab === 'wallpaper'
-                ? 'bg-white/15 text-white shadow-lg border border-white/20'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <ImageIcon className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
-            <span>Custom Wallpaper</span>
-            {customBackgroundImage && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)]" />
-            )}
-          </button>
-
+        {/* Navigation Tabs - Fixed Grid with No Slider */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 px-6 pt-3 pb-3 border-b border-white/10 shrink-0 bg-black/10 w-full">
           <button
             type="button"
             onClick={() => setActiveTab('theme')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer w-full text-center ${
               activeTab === 'theme'
                 ? 'bg-white/15 text-white shadow-lg border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
-            <span>Theme Presets</span>
+            <Sparkles className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)] shrink-0" />
+            <span className="truncate">Theme Presets</span>
             {!customBackgroundImage && !customThemeColor && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)] shrink-0" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('patterns')}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer w-full text-center ${
+              activeTab === 'patterns'
+                ? 'bg-white/15 text-white shadow-lg border border-white/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Grid className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)] shrink-0" />
+            <span className="truncate">Patterns</span>
+            {backgroundPattern && backgroundPattern !== 'waves' && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)] shrink-0" />
             )}
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('color')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer w-full text-center ${
               activeTab === 'color'
                 ? 'bg-white/15 text-white shadow-lg border border-white/20'
                 : 'text-slate-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Palette className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
-            <span>Custom Accent Color</span>
+            <Palette className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)] shrink-0" />
+            <span className="truncate">Custom Color</span>
             {customThemeColor && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)] shrink-0" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('wallpaper')}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer w-full text-center ${
+              activeTab === 'wallpaper'
+                ? 'bg-white/15 text-white shadow-lg border border-white/20'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)] shrink-0" />
+            <span className="truncate">Wallpaper</span>
+            {customBackgroundImage && (
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--theme-accent,#22c55e)] shrink-0" />
             )}
           </button>
         </div>
@@ -632,8 +867,18 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
                 </div>
               )}
 
+              {/* Background Pattern Selector for Theme */}
+              <div className="p-4 rounded-2xl liquid-glass border border-white/10">
+                {renderPatternsSection('Theme Background Pattern')}
+              </div>
+
               {/* Theme Presets Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                  <span>Curated Silk Wave Color Themes</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(Object.keys(THEMES) as ThemeId[]).map((tId) => {
                   const t = THEMES[tId];
                   const isSelected = (currentThemeId === tId || theme.id === tId) && !customThemeColor && !customBackgroundImage;
@@ -675,6 +920,94 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
                     </button>
                   );
                 })}
+                </div>
+              </div>
+
+              {/* Universal Adjustments Section */}
+              {renderAdjustmentsSection()}
+            </div>
+          )}
+
+          {/* TAB: PATTERNS & STYLES */}
+          {activeTab === 'patterns' && (
+            <div className="space-y-6">
+              {/* Wallpaper active notice */}
+              {customBackgroundImage && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl border border-amber-400/25 bg-amber-500/10 text-xs text-amber-200">
+                  <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+                    <span>
+                      Custom wallpaper is active. Selecting any pattern below will apply it in your chosen color.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectCustomBackgroundImage(null);
+                      onToast?.('Switched to dynamic pattern background!');
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-semibold border border-amber-400/30 transition-colors cursor-pointer shrink-0 text-xs"
+                  >
+                    Activate Pattern Mode
+                  </button>
+                </div>
+              )}
+
+              {/* Full Pattern Gallery */}
+              <div className="p-4 rounded-2xl liquid-glass border border-white/10 space-y-4">
+                {renderPatternsSection('Choose Background Pattern')}
+              </div>
+
+              {/* Quick Accent Color Swatches for Patterns */}
+              <div className="p-4 rounded-2xl liquid-glass border border-white/10 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <Palette className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                      <span>Pattern Illumination Color</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                      Pick any color for your pattern lines and ambient glow
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-[var(--theme-accent,#22c55e)] uppercase">
+                    {pickerColor}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <label className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/15 hover:border-white/30 cursor-pointer transition-colors text-xs font-semibold text-slate-200">
+                    <input
+                      type="color"
+                      value={pickerColor}
+                      onChange={(e) => handleApplyColor(e.target.value)}
+                      className="w-5 h-5 rounded cursor-pointer bg-transparent border-0 outline-none"
+                    />
+                    <span>Open Color Picker</span>
+                  </label>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {COLOR_SWATCHES.map((swatch) => {
+                      const isSelected = pickerColor.toLowerCase() === swatch.hex.toLowerCase();
+                      return (
+                        <button
+                          key={swatch.hex}
+                          type="button"
+                          onClick={() => handleApplyColor(swatch.hex)}
+                          className={`w-7 h-7 rounded-xl transition-all cursor-pointer border flex items-center justify-center ${
+                            isSelected
+                              ? 'ring-2 ring-white border-white scale-110 shadow-lg'
+                              : 'border-white/20 hover:scale-105'
+                          }`}
+                          style={{ backgroundColor: swatch.hex }}
+                          title={swatch.name}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white drop-shadow" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Universal Adjustments Section */}
@@ -807,6 +1140,11 @@ export const BackgroundCustomizerModal: React.FC<BackgroundCustomizerModalProps>
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Background Pattern Selector for Custom Color */}
+              <div className="p-4 rounded-2xl liquid-glass border border-white/10">
+                {renderPatternsSection('Pattern for This Color')}
               </div>
 
               {/* Adjustments: Universal for all themes and wallpapers */}

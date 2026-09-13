@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, MoreVertical, Trash2, Edit2, StickyNote } from 'lucide-react';
+import { Plus, MoreVertical, Trash2, Edit2, StickyNote, Palette, Check } from 'lucide-react';
 import { NoteBoard, NoteItem } from '../../types';
 import { NoteItemRow } from './NoteItemRow';
+import { getBoardColorConfig, BOARD_COLORS, COLOR_OPTIONS } from '../../theme/boardColors';
 
 interface NoteCardColumnProps {
   board: NoteBoard;
@@ -31,6 +32,7 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleInput, setTitleInput] = useState(board.title);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close popup window when clicking anywhere outside or pressing Escape
@@ -157,8 +159,16 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
     setIsEditingTitle(false);
   };
 
+  useEffect(() => {
+    setTitleInput(board.title);
+  }, [board.title]);
+
   const currentBoardWidth = currentDimensions.width || board.width || 340;
   const isMultiColumn = currentBoardWidth >= 480;
+  const colorConfig = getBoardColorConfig(board.color);
+  const isTinted = !colorConfig.isDefault;
+  const isDefaultTheme = !board.color || board.color === 'default';
+  const isCustomHex = Boolean(board.color && board.color.startsWith('#'));
 
   const style: React.CSSProperties = {
     position: 'absolute',
@@ -168,22 +178,39 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
     width: `${currentBoardWidth}px`,
     height: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : undefined),
     maxHeight: currentDimensions.height ? `${currentDimensions.height}px` : (board.height ? `${board.height}px` : 'calc(100vh - 150px)'),
-    boxShadow: isFreeDragging ? '0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px rgba(34, 197, 94, 0.2)' : undefined,
+    boxShadow: isFreeDragging ? `0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 30px ${isTinted ? `rgba(${colorConfig.rgb}, 0.35)` : 'rgba(34, 197, 94, 0.2)'}` : undefined,
     transition: (isResizing || isFreeDragging) ? 'none' : 'box-shadow 0.15s',
+    ...(isTinted
+      ? {
+          ['--board-tint-rgb' as string]: colorConfig.rgb,
+          ['--board-tint-top-rgb' as string]: colorConfig.topRgb,
+          ['--board-accent-hex' as string]: colorConfig.hex,
+        }
+      : {}),
   };
 
   return (
     <div
       style={style}
-      className="shrink-0 flex flex-col rounded-2xl liquid-glass-card px-5 pt-3.5 pb-4 group relative transition-all duration-150"
+      data-board-color={colorConfig.id}
+      className={`shrink-0 flex flex-col rounded-2xl liquid-glass-card ${isTinted ? 'board-tinted' : ''} px-5 pt-3.5 pb-4 group relative transition-all duration-150`}
     >
       {/* Card Header - Draggable anywhere on Canvas */}
       <div
         onPointerDown={handleFreePointerDown}
-        className="flex items-center justify-between pb-2 mb-1 border-b border-white/10 cursor-grab active:cursor-grabbing select-none"
+        style={{
+          borderBottomColor: isDefaultTheme ? undefined : `rgba(${colorConfig.rgb}, 0.35)`,
+        }}
+        className={`flex items-center justify-between pb-2 mb-1 border-b ${isDefaultTheme ? 'border-white/10' : ''} cursor-grab active:cursor-grabbing select-none`}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-2.5 h-2.5 rounded-full bg-[var(--theme-accent,#22c55e)] shadow-[0_0_8px_var(--theme-accent,#22c55e)]" />
+          <div
+            className={`w-2.5 h-2.5 rounded-full ${colorConfig.dot || ''} transition-all`}
+            style={{
+              backgroundColor: colorConfig.isCustom ? colorConfig.hex : undefined,
+              boxShadow: `0 0 8px ${colorConfig.hex}`,
+            }}
+          />
 
           {isEditingTitle ? (
             <input
@@ -220,7 +247,10 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
           <div className="relative">
             <button
               type="button"
-              onClick={() => setMenuOpen((prev) => !prev)}
+              onClick={() => {
+                setMenuOpen((prev) => !prev);
+                setColorPickerOpen(false);
+              }}
               className="p-1 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Card options"
             >
@@ -230,7 +260,7 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
             {menuOpen && (
               <div
                 ref={menuRef}
-                className="absolute right-0 top-full mt-1.5 w-40 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-[70] animate-fade-in text-xs space-y-0.5 border border-white/20"
+                className="absolute right-0 top-full mt-1.5 w-52 rounded-2xl liquid-glass-modal p-1.5 shadow-2xl z-[70] animate-fade-in text-xs space-y-0.5 border border-white/20"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
@@ -241,7 +271,7 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
                   }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-white/15 text-white text-left transition-colors cursor-pointer font-medium"
                 >
-                  <Edit2 className="w-3.5 h-3.5 text-[var(--theme-accent,#22c55e)]" />
+                  <Edit2 className="w-3.5 h-3.5" style={{ color: colorConfig.hex }} />
                   <span>Rename / Edit Card</span>
                 </button>
                 <button
@@ -255,6 +285,98 @@ export const NoteCardColumn: React.FC<NoteCardColumnProps> = ({
                   <Plus className="w-3.5 h-3.5 text-slate-400" />
                   <span>Add Note</span>
                 </button>
+
+                {/* Change Color */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setColorPickerOpen((prev) => !prev)}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-left text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  >
+                    <Palette className="w-3.5 h-3.5" style={{ color: colorConfig.hex }} />
+                    <span>Change color</span>
+                  </button>
+
+                  {colorPickerOpen && (
+                    <div className="p-2 border-t border-white/10 space-y-2">
+                      {/* Theme Default Option */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onUpdateBoard(board.id, { color: undefined });
+                          setColorPickerOpen(false);
+                          setMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-xl transition-all cursor-pointer text-[11px] ${
+                          isDefaultTheme
+                            ? 'bg-white/15 text-white font-semibold border border-white/30'
+                            : 'text-slate-300 hover:text-white hover:bg-white/10'
+                        }`}
+                        title="Reset to default theme color with no custom tint"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-full bg-[var(--theme-accent,#22c55e)] shadow-[0_0_6px_var(--theme-accent,#22c55e)]" />
+                          <span>Theme Default</span>
+                        </div>
+                        {isDefaultTheme && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                      </button>
+
+                      {/* Predefined Color Presets */}
+                      <div>
+                        <p className="text-[10px] text-slate-400 font-semibold mb-1 px-0.5">Presets:</p>
+                        <div className="flex items-center gap-1.5 justify-center py-0.5">
+                          {COLOR_OPTIONS.map((c) => {
+                            const opt = BOARD_COLORS[c];
+                            const isSelected = board.color === c;
+                            return (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => {
+                                  onUpdateBoard(board.id, { color: c });
+                                  setColorPickerOpen(false);
+                                  setMenuOpen(false);
+                                }}
+                                className={`w-5 h-5 rounded-full ${opt.dot} hover:scale-125 transition-all cursor-pointer ${
+                                  isSelected ? 'ring-2 ring-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.7)]' : 'opacity-70 hover:opacity-100'
+                                }`}
+                                title={opt.label}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Choose Any Custom Color */}
+                      <div className="pt-1.5 border-t border-white/10 flex items-center justify-between">
+                        <label className="text-[11px] text-slate-300 font-medium flex items-center gap-1.5 cursor-pointer">
+                          <div
+                            className="w-4 h-4 rounded-full border border-white/40 shadow-sm shrink-0 overflow-hidden relative cursor-pointer"
+                            style={{ backgroundColor: isCustomHex ? board.color : '#ec4899' }}
+                          >
+                            <input
+                              type="color"
+                              value={isCustomHex ? board.color : '#ec4899'}
+                              onChange={(e) => {
+                                onUpdateBoard(board.id, { color: e.target.value });
+                              }}
+                              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                              title="Pick any custom color"
+                            />
+                          </div>
+                          <span>Custom color</span>
+                        </label>
+
+                        {isCustomHex && (
+                          <span className="text-[10px] font-mono text-slate-300 uppercase bg-white/10 px-1.5 py-0.5 rounded border border-white/20">
+                            {board.color}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="h-px bg-white/10 my-1" />
                 <button
                   type="button"

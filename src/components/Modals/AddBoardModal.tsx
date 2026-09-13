@@ -1,20 +1,12 @@
 import React, { useState } from 'react';
 import { X, Columns3, Palette } from 'lucide-react';
+import { BOARD_COLORS, COLOR_OPTIONS } from '../../theme/boardColors';
 
 interface AddBoardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (title: string, color: string) => void;
 }
-
-const COLOR_CHOICES = [
-  { id: 'indigo', label: 'Indigo', dot: 'bg-indigo-500' },
-  { id: 'emerald', label: 'Emerald', dot: 'bg-emerald-500' },
-  { id: 'purple', label: 'Purple', dot: 'bg-purple-500' },
-  { id: 'amber', label: 'Amber', dot: 'bg-amber-500' },
-  { id: 'rose', label: 'Rose', dot: 'bg-rose-500' },
-  { id: 'sky', label: 'Sky Blue', dot: 'bg-sky-500' },
-];
 
 export const AddBoardModal: React.FC<AddBoardModalProps> = ({ isOpen, onClose, onSave }) => {
   const [title, setTitle] = useState('');
@@ -71,17 +63,20 @@ export const AddBoardModal: React.FC<AddBoardModalProps> = ({ isOpen, onClose, o
               <Palette className="w-3.5 h-3.5 text-slate-400" /> Accent Color
             </label>
             <div className="flex items-center gap-2.5">
-              {COLOR_CHOICES.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setColor(c.id)}
-                  className={`w-7 h-7 rounded-xl ${c.dot} transition-all flex items-center justify-center cursor-pointer ${
-                    color === c.id ? 'ring-2 ring-white scale-110 shadow-[0_0_12px_rgba(255,255,255,0.5)]' : 'opacity-60 hover:opacity-100'
-                  }`}
-                  title={c.label}
-                />
-              ))}
+              {COLOR_OPTIONS.map((cId) => {
+                const c = BOARD_COLORS[cId];
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setColor(c.id)}
+                    className={`w-7 h-7 rounded-xl ${c.dot} transition-all flex items-center justify-center cursor-pointer ${
+                      color === c.id ? 'ring-2 ring-white scale-110 shadow-[0_0_12px_rgba(255,255,255,0.5)]' : 'opacity-60 hover:opacity-100'
+                    }`}
+                    title={c.label}
+                  />
+                );
+              })}
             </div>
           </div>
 

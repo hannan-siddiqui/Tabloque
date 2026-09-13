@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Layers } from 'lucide-react';
+import { BOARD_COLORS, COLOR_OPTIONS } from '../../theme/boardColors';
 
 interface AddSimpleCardModalProps {
   isOpen: boolean;
@@ -7,15 +8,6 @@ interface AddSimpleCardModalProps {
   onClose: () => void;
   onSave: (title: string, color: string) => void;
 }
-
-const COLORS = [
-  { id: 'emerald', bg: 'bg-emerald-500', name: 'Emerald' },
-  { id: 'purple', bg: 'bg-purple-500', name: 'Purple' },
-  { id: 'rose', bg: 'bg-rose-500', name: 'Rose' },
-  { id: 'amber', bg: 'bg-amber-500', name: 'Amber' },
-  { id: 'sky', bg: 'bg-sky-500', name: 'Sky' },
-  { id: 'indigo', bg: 'bg-indigo-500', name: 'Indigo' },
-];
 
 export const AddSimpleCardModal: React.FC<AddSimpleCardModalProps> = ({
   isOpen,
@@ -71,17 +63,20 @@ export const AddSimpleCardModal: React.FC<AddSimpleCardModalProps> = ({
           <div>
             <label className="block text-xs font-semibold text-slate-300 mb-2">Card Accent</label>
             <div className="flex items-center gap-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setSelectedColor(c.id)}
-                  className={`w-6 h-6 rounded-full ${c.bg} transition-transform ${
-                    selectedColor === c.id ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-100'
-                  }`}
-                  title={c.name}
-                />
-              ))}
+              {COLOR_OPTIONS.map((cId) => {
+                const c = BOARD_COLORS[cId];
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedColor(c.id)}
+                    className={`w-6 h-6 rounded-full ${c.dot} transition-transform ${
+                      selectedColor === c.id ? 'ring-2 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.6)]' : 'opacity-60 hover:opacity-100'
+                    }`}
+                    title={c.label}
+                  />
+                );
+              })}
             </div>
           </div>
 

@@ -16,11 +16,14 @@ import {
   RotateCcw,
   Sun,
   Eye,
+  Grid,
+  Ban,
 } from 'lucide-react';
 import { 
   FirebaseConfig, 
   TabloqueState, 
   ThemeId, 
+  BackgroundPatternId,
   TypographyConfig, 
   BorderConfig, 
   FontFamilyId, 
@@ -31,6 +34,7 @@ import {
   BorderGlowId 
 } from '../../types';
 import { THEMES } from '../../theme/themes';
+import { BACKGROUND_PATTERNS } from '../../theme/patterns';
 import { SyncStatus } from '../../hooks/useCloudSync';
 
 interface SettingsModalProps {
@@ -54,6 +58,8 @@ interface SettingsModalProps {
   onRestoreBackup?: (state: TabloqueState) => void;
   customThemeColor?: string | null;
   onSelectCustomThemeColor?: (color: string | null) => void;
+  backgroundPattern?: BackgroundPatternId;
+  onSelectBackgroundPattern?: (pattern: BackgroundPatternId) => void;
   customBackgroundImage?: string | null;
   onSelectCustomBackgroundImage?: (image: string | null) => void;
   backgroundBlur?: number;
@@ -143,6 +149,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onRestoreBackup,
   customThemeColor,
   onSelectCustomThemeColor,
+  backgroundPattern = 'waves',
+  onSelectBackgroundPattern,
   customBackgroundImage,
   onSelectCustomBackgroundImage,
   backgroundBlur = 0,
@@ -438,6 +446,71 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                   )}
                 </div>
+
+                {/* Background Pattern Selector */}
+                {onSelectBackgroundPattern && (
+                  <div className="p-4 rounded-2xl liquid-glass border border-white/15 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-bold text-white flex items-center gap-2">
+                          <Grid className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Background Pattern & Style</span>
+                        </h4>
+                        <p className="text-[11px] text-slate-400">
+                          Pattern renders in your selected theme color. Choose "Pure Color" to remove patterns.
+                        </p>
+                      </div>
+                      {backgroundPattern !== 'none' ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectBackgroundPattern('none')}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 text-[11px] font-semibold transition-colors cursor-pointer shrink-0"
+                          title="Remove pattern: Keep only background color"
+                        >
+                          <Ban className="w-3 h-3 text-rose-400" />
+                          <span>Remove Pattern (Color Only)</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                          <span>Pure Color Mode (No Pattern)</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                      {BACKGROUND_PATTERNS.map((pat) => {
+                        const isSelected = (backgroundPattern || 'waves') === pat.id && !customBackgroundImage;
+                        return (
+                          <button
+                            key={pat.id}
+                            type="button"
+                            onClick={() => onSelectBackgroundPattern(pat.id)}
+                            className={`p-2.5 rounded-xl border text-left transition-all relative overflow-hidden cursor-pointer ${
+                              isSelected
+                                ? 'border-emerald-400 bg-emerald-500/15 ring-1 ring-emerald-400/50'
+                                : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-xs font-bold text-white truncate">
+                                {pat.name}
+                              </span>
+                              {isSelected && (
+                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-400 text-black flex items-center justify-center shrink-0">
+                                  <Check className="w-2 h-2 stroke-[3]" />
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
+                              {pat.description}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <p className="text-xs text-slate-300 font-semibold">

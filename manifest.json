@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": " ",
+  "name": "TabLoque - Visual Bookmark Manager",
   "version": "1.0.0",
   "description": "Visual, drag-and-drop bookmark manager replacing your Chrome New Tab page with customizable boards and cloud sync.",
   "permissions": [

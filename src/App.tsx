@@ -42,6 +42,7 @@ export const App: React.FC = () => {
     togglePrivacyMode,
     setTheme,
     setCustomThemeColor,
+    setBackgroundPattern,
     setCustomBackgroundImage,
     setBackgroundBlur,
     setBackgroundBrightness,
@@ -223,6 +224,7 @@ export const App: React.FC = () => {
       {/* Dynamic Ambient Silk Waves Background with optional Custom Wallpaper */}
       <BackgroundWaves
         theme={currentThemeConfig}
+        pattern={state.backgroundPattern}
         customBackgroundImage={state.customBackgroundImage}
         backgroundBlur={state.backgroundBlur}
         backgroundBrightness={state.backgroundBrightness}
@@ -419,6 +421,8 @@ export const App: React.FC = () => {
         onRestoreBackup={restoreState}
         customThemeColor={state.customThemeColor}
         onSelectCustomThemeColor={setCustomThemeColor}
+        backgroundPattern={state.backgroundPattern}
+        onSelectBackgroundPattern={setBackgroundPattern}
         customBackgroundImage={state.customBackgroundImage}
         onSelectCustomBackgroundImage={setCustomBackgroundImage}
         backgroundBlur={state.backgroundBlur ?? 0}
@@ -524,6 +528,8 @@ export const App: React.FC = () => {
         onSelectTheme={setTheme}
         customThemeColor={state.customThemeColor}
         onSelectCustomThemeColor={setCustomThemeColor}
+        backgroundPattern={state.backgroundPattern}
+        onSelectBackgroundPattern={setBackgroundPattern}
         customBackgroundImage={state.customBackgroundImage}
         onSelectCustomBackgroundImage={setCustomBackgroundImage}
         backgroundBlur={state.backgroundBlur ?? 0}

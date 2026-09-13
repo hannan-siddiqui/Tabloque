@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { TabloqueState, Page, Board, Bookmark, FirebaseConfig, ThemeId, WatchType, WatchWidget, CalendarType, CalendarWidget, TypographyConfig, BorderConfig, AppTabId, AuthBoard, AuthItem, NoteBoard, NoteItem } from '../types';
+import { TabloqueState, Page, Board, Bookmark, FirebaseConfig, ThemeId, BackgroundPatternId, WatchType, WatchWidget, CalendarType, CalendarWidget, TypographyConfig, BorderConfig, AppTabId, AuthBoard, AuthItem, NoteBoard, NoteItem } from '../types';
 import { loadStateFromStorage, saveStateToStorage, onStorageChange } from '../storage/chrome-storage';
 import { INITIAL_STATE } from '../storage/initial-data';
 import { ParsedBookmarkGroup } from '../services/bookmark-importer';
@@ -551,6 +551,10 @@ export function useTabloqueStore() {
     setState((prev) => ({ ...prev, customThemeColor: color }));
   }, []);
 
+  const setBackgroundPattern = useCallback((pattern: BackgroundPatternId) => {
+    setState((prev) => ({ ...prev, backgroundPattern: pattern }));
+  }, []);
+
   const setCustomBackgroundImage = useCallback((imageUrl: string | null) => {
     setState((prev) => ({ ...prev, customBackgroundImage: imageUrl }));
   }, []);
@@ -996,6 +1000,7 @@ export function useTabloqueStore() {
     togglePrivacyMode,
     setTheme,
     setCustomThemeColor,
+    setBackgroundPattern,
     setCustomBackgroundImage,
     setBackgroundBlur,
     setBackgroundBrightness,

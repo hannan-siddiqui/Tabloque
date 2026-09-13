@@ -64,6 +64,16 @@ export type ThemeId =
   | 'hologram'
   | 'phantom';
 
+export type BackgroundPatternId =
+  | 'none'
+  | 'waves'
+  | 'grid'
+  | 'dots'
+  | 'mesh'
+  | 'hexagons'
+  | 'circuit'
+  | 'stripes';
+
 export type WatchType =
   | 'hybrid'
   | 'stacked'
@@ -186,6 +196,7 @@ export interface TabloqueState {
   privacyMode: boolean;
   theme?: ThemeId;
   customThemeColor?: string | null;
+  backgroundPattern?: BackgroundPatternId;
   customBackgroundImage?: string | null;
   backgroundBlur?: number;
   backgroundBrightness?: number;

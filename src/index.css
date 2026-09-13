@@ -193,6 +193,41 @@
     inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
 }
 
+/* Tinted Board Cards - Dynamic Card Colors */
+.liquid-glass-card.board-tinted,
+.border-style-subtle .liquid-glass-card.board-tinted,
+.border-style-luminous .liquid-glass-card.board-tinted,
+.border-style-bold .liquid-glass-card.board-tinted,
+.border-style-accent .liquid-glass-card.board-tinted {
+  background: 
+    radial-gradient(ellipse at 20% 15%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.38) 0%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.12) 65%, transparent 100%),
+    linear-gradient(140deg, rgba(var(--board-tint-rgb, 99, 102, 241), 0.28) 0%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.12) 50%, rgba(10, 16, 20, 0.65) 100%) !important;
+  border-color: rgba(var(--board-tint-rgb, 99, 102, 241), 0.45) !important;
+  border-top-color: rgba(var(--board-tint-top-rgb, 129, 140, 248), 0.8) !important;
+  box-shadow: 
+    0 8px 30px -4px rgba(0, 0, 0, 0.45),
+    0 0 25px -2px rgba(var(--board-tint-rgb, 99, 102, 241), 0.35),
+    inset 0 1px 1px 0 rgba(var(--board-tint-top-rgb, 129, 140, 248), 0.35) !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.liquid-glass-card.board-tinted:hover,
+.border-style-subtle .liquid-glass-card.board-tinted:hover,
+.border-style-luminous .liquid-glass-card.board-tinted:hover,
+.border-style-bold .liquid-glass-card.board-tinted:hover,
+.border-style-accent .liquid-glass-card.board-tinted:hover {
+  background: 
+    radial-gradient(ellipse at 20% 15%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.48) 0%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.18) 65%, transparent 100%),
+    linear-gradient(140deg, rgba(var(--board-tint-rgb, 99, 102, 241), 0.36) 0%, rgba(var(--board-tint-rgb, 99, 102, 241), 0.16) 50%, rgba(12, 20, 26, 0.7) 100%) !important;
+  border-color: rgba(var(--board-tint-rgb, 99, 102, 241), 0.65) !important;
+  border-top-color: rgba(var(--board-tint-top-rgb, 129, 140, 248), 0.95) !important;
+  box-shadow: 
+    0 12px 36px -4px rgba(0, 0, 0, 0.5),
+    0 0 32px 0px rgba(var(--board-tint-rgb, 99, 102, 241), 0.45),
+    inset 0 1px 1px 0 rgba(var(--board-tint-top-rgb, 129, 140, 248), 0.45) !important;
+}
+
+
 /* Typography Fonts */
 .font-inter { font-family: 'Inter', system-ui, sans-serif !important; }
 .font-jakarta { font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important; }

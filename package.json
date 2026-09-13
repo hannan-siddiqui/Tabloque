@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "package": "npm run build && powershell -ExecutionPolicy Bypass -File scripts/package.ps1",
     "preview": "vite preview"
   },
   "dependencies": {

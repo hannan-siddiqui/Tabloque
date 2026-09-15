@@ -4,8 +4,25 @@
 
 # TabLoque 🔖
 
-> **Visual, Drag-and-Drop Bookmark Workspace replacing your Chrome New Tab page.**  
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/tabloque-visual-bookmark/ajcbbgfknapelkicefcjnkoindoooobn">
+    <img src="https://img.shields.io/badge/Chrome_Web_Store-Available-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Web Store" />
+  </a>
+  <img src="https://img.shields.io/badge/Manifest-V3-10B981?style=for-the-badge" alt="Manifest V3" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React 18" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+</p>
+
+> **Visual, Drag-and-Drop Bookmark Workspace replacing your Chrome New Tab page with liquid glass boards, notes & cloud sync.**  
 > Built with Manifest V3, React 18, Tailwind CSS, Vite, `@crxjs/vite-plugin`, `@dnd-kit`, and Firebase Firestore.
+
+---
+
+## ⚡ Install TabLoque
+
+### 🛍️ Official Chrome Web Store (Recommended)
+Install directly in one click from the Chrome Web Store:  
+👉 **[Add TabLoque to Chrome](https://chromewebstore.google.com/detail/tabloque-visual-bookmark/ajcbbgfknapelkicefcjnkoindoooobn)**
 
 ---
 

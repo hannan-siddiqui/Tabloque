@@ -1,6 +1,8 @@
 # TabLoque — Chrome Web Store Publication Guide
 
-This document contains everything you need to publish **TabLoque** to the Google Chrome Web Store.
+> 🎉 **Live on the Chrome Web Store:**  
+> - **Store URL:** [TabLoque on Chrome Web Store](https://chromewebstore.google.com/detail/tabloque-visual-bookmark/ajcbbgfknapelkicefcjnkoindoooobn)  
+> - **Extension ID:** `ajcbbgfknapelkicefcjnkoindoooobn`  
 
 ---
 
